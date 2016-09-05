@@ -5,7 +5,7 @@
         <li class="js-logo">
           <a href="<%= CartoDB.url(self, 'root') %>">
             <span class="Logo">
-              <img src="<%= image_path "layout/carto-logo.svg" %>" alt="carto">
+              <img src="<%= image_path "layout/tileo-logo.svg" %>" alt="tileo">
             </span>
           </a>
         </li>
@@ -29,12 +29,17 @@
     <div class="Header-settings">
       <ul class="Header-settingsList CDB-Text CDB-Size-medium">
         <% unless cartodb_com_hosted? %>
-          <li class="Header-settingsItem">
-            <a target="_blank" href="https://carto.com/learn/guides" class="CDB-Text is-semibold Header-settingsLink Header-settingsLink--dashboard">Guides</a>
-          </li>
-          <li class="Header-settingsItem">
-            <a target="_blank" href="https://carto.com/docs" class="CDB-Text is-semibold Header-settingsLink Header-settingsLink--dashboard">Documentation</a>
-          </li>
+        <li class="Header-settingsItem">
+          <a target="_blank" href="/" class="CDB-Text is-semibold Header-settingsLink Header-settingsLink--dashboard">Gallery</a>
+        </li>
+        <li class="Header-settingsItem">
+          <a target="_blank" href="/" class="CDB-Text is-semibold Header-settingsLink Header-settingsLink--dashboard">Documentation</a>
+        </li>
+        <li class="Header-settingsItem Header-settingsItemNotifications js-user-notifications">
+          <a href="#/notifications" class="UserNotifications">
+            <i class="UserNotifications-Icon CDB-IconFont CDB-IconFont-Alert"></i>
+          </a>
+        </li>
         <% end %>
         <li class="Header-settingsItem Header-settingsItemNotifications js-user-notifications">
           <button class="UserNotifications">
