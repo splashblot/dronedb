@@ -3,20 +3,20 @@
     <div class="Header-navigation">
       <ul class="Header-navigationList">
         <li class="js-logo">
-          <a href="<%= cartodb_com_hosted? ? CartoDB.url(self, 'root') : "https://carto.com" %>">
+          <a href="<%= cartodb_com_hosted? ? CartoDB.url(self, 'root') : "https://alpha.tileo.com" %>">
             <span class="Logo">
-              <img src="<%= image_path "layout/carto-logo.svg" %>" alt="carto">
+              <img src="<%= image_path "layout/tileo-logo.svg" %>" alt="tileo">
             </span>
           </a>
         </li>
 
         <% unless cartodb_com_hosted? %>
           <li class="Header-navigationItem js-user-tour u-hideOnTablet">
-            <a href="https://carto.com/builder/" class="Header-navigationLink">Builder</a>
+            <a href="/" class="Header-navigationLink">Builder</a>
           </li>
 
           <li class="Header-navigationItem js-user-tour u-hideOnTablet">
-            <a href="https://carto.com/engine/" class="Header-navigationLink">Engine</a>
+            <a href="/" class="Header-navigationLink">Engine</a>
           </li>
 
           <li class="Header-navigationItem js-user-industries u-hideOnTablet">
@@ -24,11 +24,11 @@
           </li>
 
           <li class="Header-navigationItem u-hideOnTablet">
-            <a href="https://carto.com/pricing/" class="Header-navigationLink">Pricing</a>
+            <a href="/" class="Header-navigationLink">Pricing</a>
           </li>
 
           <li class="Header-navigationItem u-hideOnTablet">
-            <a href="https://carto.com/blog/" class="Header-navigationLink">Blog</a>
+            <a href="/" class="Header-navigationLink">Blog</a>
           </li>
         <% end %>
       </ul>
@@ -42,7 +42,7 @@
 
         <% unless cartodb_com_hosted? %>
           <li class="Header-settingsItem">
-            <a href="https://carto.com/signup" class="PublicButton PublicButton--sMedium PublicButton--cWhite is-hover PublicButton--public">
+            <a href="mailto:info@tileo.co?Subject=Early%20access" class="PublicButton PublicButton--sMedium PublicButton--cWhite is-hover PublicButton--public">
               <span>Sign up</span>
             </a>
           </li>
