@@ -149,13 +149,6 @@
               <i class="Navmenu-actionIcon CDB-IconFont CDB-IconFont-floppy"></i>
               <a href="#" class="Navmenu-link Navmenu-link--action js-Navmenu-link--download">Download</a>
             </li>
-
-            <% if !Cartodb.config[:cartodb_com_hosted].present? %>
-              <li class="Navmenu-item u-hideOnTablet">
-                <a class="Button Button--main Navmenu-editLink Navmenu-editLink--edit Navmenu-editLink--oneclick is-active js-oneclick" href="https://oneclick.carto.com/?file=<%= CGI.escape( @export_sql_api_url ) %>&provider=<%= URI.encode(@table.owner.username) %>&logo=<%= URI.encode(@avatar_url) %>">Create map</a>
-                <a href="<%= CartoDB.url(self, 'public_tables_show', {id: @table.name}, @table.owner.organization ? @table.owner : nil) %>" class="Button Button--main Navmenu-editLink Navmenu-editLink--edit Navmenu-editLink--oneclick js-edit">Edit in CARTO</a>
-              </li>
-            <% end %>
           </ul>
         </div>
       </div>
@@ -260,26 +253,6 @@
         <% end %>
       </ul>
     <% end %>
-
-    <%# DISQUS %>
-    <% if @table.owner.disqus_shortname.present? %>
-      <div class="u-inner">
-        <div class="PublicMap-block PublicMap-info">
-          <div id="disqus_thread"></div>
-          <script type="text/javascript">
-            var disqus_shortname  = '<%= @disqus_shortname %>';
-            var disqus_identifier = '<%= @visualization.id %>';
-
-            (function() {
-              var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-              dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-              (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-            })();
-          </script>
-        </div>
-      </div>
-    </div>
-  <% end %>
 
   <% if cartodb_com_hosted? %>
     <%= render 'admin/shared/footer', :light => true %>
