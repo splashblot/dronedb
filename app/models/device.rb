@@ -5,10 +5,10 @@ class Device < Sequel::Model
   # Ignore mass-asigment on not allowed columns
   self.strict_param_setting = false
 
-  set_allowed_columns(:name)
+  set_allowed_columns(:devices)
 
   def validate
     super
-    errors.add(:name, "can't be blank") if name.blank?
+    errors.add(:devices, "can't be blank") if name.blank?
   end
 end
