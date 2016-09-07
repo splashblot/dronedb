@@ -7,7 +7,7 @@ module Carto
       include Carto::ControllerHelper
 
       ssl_required :update
-      before_filter :load_user_devicess, only: [:update]
+      before_filter :load_user_devices, only: [:update]
 
       rescue_from StandardError, with: :rescue_from_standard_error
       rescue_from Carto::LoadError, with: :rescue_from_carto_error
