@@ -118,7 +118,7 @@ CartoDB::Application.routes.draw do
 
     # Devices (drones & cameras only for now!)
     get '(/user/:user_domain)(/u/:user_domain)/dashboard/drones'                            => 'visualizations#index', as: :drones_index
-    get '(/user/:user_domain)(/u/:user_domain)/dashboard/devices'                           => 'visualizations#index', as: :drones_index
+    get '(/user/:user_domain)(/u/:user_domain)/dashboard/devices'                           => 'user_devices#index', as: :devices_index
 
     # Tables
     get '(/user/:user_domain)(/u/:user_domain)/dashboard/tables'                            => 'visualizations#index', as: :tables_index
