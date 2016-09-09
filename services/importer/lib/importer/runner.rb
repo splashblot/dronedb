@@ -10,6 +10,7 @@ require_relative './runner_helper'
 require_relative '../../../datasources/lib/datasources/datasources_factory'
 require_relative '../../../platform-limits/platform_limits'
 require_relative '../../../../lib/cartodb/stats/importer'
+require_relative '../../../../lib/carto/http/client'
 require_relative '../../../../lib/carto/visualization_exporter'
 require_relative '../helpers/quota_check_helpers'
 
@@ -266,6 +267,26 @@ module CartoDB
           @importer_stats.timing('import') do
             source_files = unpacker.source_files
 
+            image_files = image_files(source_files)
+            log.append "Source files #{source_files.count}"
+            log.append "Image files #{image_files.count}"
+            image_files.each do |image_source_file|
+              log.append "Contains image #{image_source_file.name}"
+              log.store
+            end
+
+            # TODO: remove this hack
+            # Assumes if all files in .zip are images, process via ODM
+            if (source_files.count == image_files.count) && (image_files.count != 0)
+              response = http_client.request(
+                "odm:3001/task/cancel",
+                method: :post
+              ).run
+              if (response.code == 200)
+                parsed_response = JSON.parse(response.body)
+              end
+            end
+
             table_files = table_files(source_files)
             if table_files.length > MAX_TABLES_PER_IMPORT
               add_warning(max_tables_per_import: MAX_TABLES_PER_IMPORT)
@@ -298,7 +319,8 @@ module CartoDB
       end
 
       def table_files(source_files)
-        source_files.select { |source_file| !has_visualization_extension?(source_file) }
+        source_files.select { |source_file|
+          !( has_visualization_extension?(source_file) || has_image_extension?(source_file) )}
       end
 
       def visualization_files(source_files)
@@ -307,6 +329,14 @@ module CartoDB
 
       def has_visualization_extension?(source_file)
         Carto::VisualizationExporter.has_visualization_extension?(source_file.path)
+      end
+
+      def image_files(source_files)
+        source_files.select { |source_file| has_image_extension?(source_file) }
+      end
+
+      def has_image_extension?(source_file)
+        Carto::VisualizationExporter.has_image_extension?(source_file.path)
       end
 
       def build_visualization_source_file(source_file)
@@ -444,6 +474,10 @@ module CartoDB
 
       def delete_job_table
         @job.delete_job_table
+      end
+
+      def http_client
+        @http_client ||= Carto::Http::Client.get('runner', log_requests: true)
       end
     end
   end

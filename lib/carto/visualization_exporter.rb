@@ -73,11 +73,17 @@ module Carto
     DEFAULT_EXPORT_FORMAT = 'gpkg'.freeze
     EXPORT_EXTENSION = '.carto.json'.freeze
     CARTO_EXTENSION = '.carto'.freeze
+    JPG_EXTENSION = '.jpg'.freeze
 
     VISUALIZATION_EXTENSIONS = [Carto::VisualizationExporter::EXPORT_EXTENSION].freeze
+    IMAGE_EXTENSIONS = [Carto::VisualizationExporter::JPG_EXTENSION].freeze
 
     def self.has_visualization_extension?(filename)
       VISUALIZATION_EXTENSIONS.any? { |extension| filename =~ /#{Regexp.escape(extension)}$/ }
+    end
+
+    def self.has_image_extension?(filename)
+      IMAGE_EXTENSIONS.any? { |extension| filename =~ /#{Regexp.escape(extension)}$/ }
     end
 
     def export(visualization, user,
