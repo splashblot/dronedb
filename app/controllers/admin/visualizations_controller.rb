@@ -81,8 +81,6 @@ class Admin::VisualizationsController < Admin::AdminController
     @google_maps_query_string = @visualization.user.google_maps_query_string
     @basemaps = @visualization.user.basemaps
 
-    puts @visualization.tags.include? 'raster'
-
     if table_action
       if current_user.builder_enabled? && @visualization.has_read_permission?(current_user)
         return redirect_to CartoDB.url(self, 'builder_dataset', { id: request.params[:id] }, current_user)
