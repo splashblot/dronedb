@@ -29,6 +29,18 @@
   height: 100%;
 }
 
+.Editor-fillImage {
+  display: flex;
+  max-width: 20px;
+  max-height: 20px;
+  padding: 0 0 0 2px;
+}
+
+.Editor-fillImageAsset {
+  max-width: 20px;
+  max-height: 20px;
+}
+
 .CDB-OptionInput-item.is-disabled .CDB-OptionInput-content {
   color: #CCC;
 }
@@ -40,6 +52,9 @@
 }
 .CDB-OptionInput-container {
   height: 100%;
+}
+.CDB-OptionInput-container--noSlider {
+  width: 100%;
 }
 
 .InputColor-modalHeader {

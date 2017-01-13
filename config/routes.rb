@@ -326,9 +326,6 @@ CartoDB::Application.routes.draw do
   end
 
   scope :module => 'carto/admin' do
-    # 1b Visualizations
-    get '(/user/:user_domain)(/u/:user_domain)/bivisualizations/:id/embed_map'        => 'bi_visualizations#embed_map',       as: :bi_visualizations_embed_map,  constraints: { id: /[^\/]+/ }, defaults: { dont_rewrite: true }
-
     resources :mobile_apps, path: '(/user/:user_domain)(/u/:user_domain)/your_apps/mobile', except: [:edit]
   end
 
@@ -341,11 +338,6 @@ CartoDB::Application.routes.draw do
     get '(/user/:user_domain)(/u/:user_domain)/api/v1/viz/:id/like'                       => 'visualizations#is_liked',        as: :api_v1_visualizations_is_liked,        constraints: { id: /[^\/]+/ }
     match '(/user/:user_domain)(/u/:user_domain)/api/v1/viz/:id/like' => 'visualizations#is_liked', as: :api_v1_visualizations_is_liked, constraints: {method: 'OPTIONS'}
     get '(/user/:user_domain)(/u/:user_domain)/api/v1/viz/:id/related_templates'          => 'templates#related_templates_by_visualization', as: :api_v1_visualizations_related_templates, constraints: { id: /[^\/]+/ }
-
-    # 1b Visualizations
-    get '(/user/:user_domain)(/u/:user_domain)/api/v1/bivisualizations' => 'bi_visualizations#index', as: :api_v1_bi_visualizations_index
-    get '(/user/:user_domain)(/u/:user_domain)/api/v1/bivisualizations/:id' => 'bi_visualizations#show', as: :api_v1_bi_visualizations_show, constraints: { id: /[^\/]+/ }
-    get '(/user/:user_domain)(/u/:user_domain)/api/v1/bivisualizations/:id/viz' => 'bi_visualizations#vizjson', as: :api_v1_bi_visualizations_vizjson, constraints: { id: /[^\/]+/ }
 
     # Tables
     get '(/user/:user_domain)(/u/:user_domain)/api/v1/tables/:id'                     => 'tables#show',   as: :api_v1_tables_show, constraints: { id: /[^\/]+/ }
@@ -541,6 +533,8 @@ CartoDB::Application.routes.draw do
         get '/:id/data_imports/:data_import_id' => 'users#data_import'
         get '/:id/synchronizations' => 'users#synchronizations'
         get '/:id/synchronizations/:synchronization_id' => 'users#synchronization'
+        get '/:id/geocodings' => 'users#geocodings'
+        get '/:id/geocodings/:geocoding_id' => 'users#geocoding'
       end
     end
     resources :organizations
@@ -593,6 +587,10 @@ CartoDB::Application.routes.draw do
         resources :analyses, only: [:show, :create, :update, :destroy], constraints: { id: /[^\/]+/ }
         resources :mapcaps, only: [:index, :show, :create, :destroy], constraints: { id: /[^\/]+/ }
         resource :state, only: [:update]
+
+        resources :snapshots,
+                  only: [:index, :show, :create, :update, :destroy],
+                  constraints: { id: UUID_REGEXP }
 
         scope '/layer/:layer_id', constraints: { layer_id: /[^\/]+/ } do
           resources :legends,

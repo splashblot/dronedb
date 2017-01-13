@@ -7,7 +7,8 @@ class Carto::Map < ActiveRecord::Base
   has_many :layers_maps
   has_many :layers, class_name: 'Carto::Layer',
                     order: '"order"',
-                    through: :layers_maps
+                    through: :layers_maps,
+                    after_add: Proc.new { |map, layer| layer.set_default_order(map) }
 
   has_many :base_layers, class_name: 'Carto::Layer',
                          order: '"order"',
@@ -150,12 +151,13 @@ class Carto::Map < ActiveRecord::Base
   private
 
   def ensure_options
-    self.options ||= {
-      dashboard_menu: true,
-      layer_selector: false,
-      legends: legends,
-      scrollwheel: scrollwheel
-    }
+    self.options ||= {}
+    options[:dashboard_menu] = true if options[:dashboard_menu].nil?
+    options[:layer_selector] = false if options[:layer_selector].nil?
+    options[:legends] = legends if options[:legends].nil?
+    options[:scrollwheel] = scrollwheel if options[:scrollwheel].nil?
+
+    options
   end
 
   def validate_options
