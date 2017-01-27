@@ -8,6 +8,10 @@
     <%= csrf_meta_tag -%>
   </head>
   <body>
+    <!-- include google maps library -->
+    <!-- TODO: Replace with a REAL key (this is Pablo's key) -->
+    <script type="text/javascript" src="http://www.maps.google.com/maps/api/js?key=AIzaSyCk5gRspKeHNJ0sS6iZotUsQvlAkXsieFg&v=3.25"></script>
+
     <%= yield %>
     <%= yield :js -%>
     <%= insert_google_analytics('primary') -%>
