@@ -345,6 +345,10 @@
       "title": "Predict trends and volatility",
       "short-title": "Trends"
     },
+    "extract-plant": {
+      "title": "Extract and georeference plants",
+      "short-title": "Extract plants"
+    },
     "source": "Source",
     "routing": {
       "short-title": "Routing"
@@ -354,7 +358,8 @@
     "all": "All",
     "analyze-predict": "Analyze and predict",
     "create-clean": "Create and clean",
-    "data-transformation": "Transform"
+    "data-transformation": "Transform",
+    "extract": "Extract (Tileo only)"
   },
   "form-components": {
     "editors": {
@@ -935,6 +940,10 @@
           "spatial-markov-trend": {
             "title": "Predict trends and volatility",
             "desc": "Predict probability of upward and downward trends using spatial Markov chains."
+          },
+          "extract-plant": {
+            "title": "Extract and georeference plants",
+            "desc": "Extract the number and location of various plants (batch processing)."
           },
           "data-observatory-measure": {
             "title": "Enrich from Data Observatory",
