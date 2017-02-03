@@ -13,7 +13,7 @@ class Map < Sequel::Model
 
   many_to_many :layers,
                order: :order,
-               after_add: proc { |map, layer| layer.set_default_order(map) }
+               after_add: proc { |map, layer| layer.after_added_to_map(map) }
 
   many_to_many :base_layers,
                clone: :layers,
@@ -83,7 +83,7 @@ class Map < Sequel::Model
   def notify_map_change
     visualization = visualizations.first
 
-    force_notify_map_change unless visualization && visualization.latest_mapcap
+    force_notify_map_change
   end
 
   def force_notify_map_change

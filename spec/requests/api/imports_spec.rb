@@ -39,6 +39,7 @@ describe "Imports API" do
   end
 
   it 'performs asynchronous url imports' do
+    CartoDB::Importer2::Downloader.any_instance.stubs(:validate_url!).returns(true)
     serve_file Rails.root.join('db/fake_data/clubbing.csv') do |url|
       post api_v1_imports_create_url(params.merge(:url        => url,
                                        :table_name => "wadus"))
@@ -122,6 +123,7 @@ describe "Imports API" do
   it 'imports all the sample data' do
     @user.update table_quota: 10
 
+    CartoDB::Importer2::Downloader.any_instance.stubs(:validate_url!).returns(true)
     serve_file(Rails.root.join('spec/support/data/TM_WORLD_BORDERS_SIMPL-0.3.zip')) do |url|
       post api_v1_imports_create_url(params.merge(url: url, table_name: "wadus"))
 
@@ -143,22 +145,26 @@ describe "Imports API" do
   end
 
   it 'raises an error if the user attempts to import tables when being over quota' do
-    @user.update table_quota: 5
+    @user.update table_quota: 1
 
-    # This file contains 10 data sources
+    # This file contains 6 data sources
+    CartoDB::Importer2::Downloader.any_instance.stubs(:validate_url!).returns(true)
     serve_file(Rails.root.join('spec/support/data/ESP_adm.zip')) do |url|
       post api_v1_imports_create_url, params.merge(:url        => url,
                                        :table_name => "wadus")
     end
     response.code.should be == '200'
     last_import = DataImport.order(:updated_at.desc).first
+    last_import.tables_created_count.should be_nil
     last_import.state.should be == 'failure'
     last_import.error_code.should be == 8002
+    last_import.log.entries.should include('Results would set overquota')
     @user.reload.tables.count.should == 0
   end
 
   it 'raises an error if the user attempts to import tables when being over disk quota' do
     @user.update quota_in_bytes: 1000, table_quota: 200
+    CartoDB::Importer2::Downloader.any_instance.stubs(:validate_url!).returns(true)
     serve_file(Rails.root.join('spec/support/data/ESP_adm.zip')) do |url|
       post api_v1_imports_create_url, params.merge(:url        => url,
                                        :table_name => "wadus")
