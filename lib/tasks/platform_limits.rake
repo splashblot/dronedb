@@ -11,13 +11,13 @@ namespace :cartodb do
       if quota_in_mb >= 450 && quota_in_mb < 1500
         user.max_import_file_size = mid_size
         user.save
-        print "M"
+        print "M - #{user.username} #{quota_in_mb}\n"
       elsif quota_in_mb >= 1500
         user.max_import_file_size = big_size
         user.save
-        print "B"
+        print "B - #{user.username} #{quota_in_mb}\n"
       else
-        print "."
+        print ". - #{user.username} #{quota_in_mb}\n"
       end
     end
     puts "\n"
