@@ -2,31 +2,38 @@ require 'active_record'
 
 require_relative '../../helpers/bounding_box_helper'
 require_relative './carto_json_serializer'
+require_dependency 'common/map_common'
 
 class Carto::Map < ActiveRecord::Base
+  include Carto::MapBoundaries
+
   has_many :layers_maps
   has_many :layers, class_name: 'Carto::Layer',
                     order: '"order"',
                     through: :layers_maps,
-                    after_add: Proc.new { |map, layer| layer.after_added_to_map(map) }
+                    after_add: Proc.new { |map, layer| layer.after_added_to_map(map) },
+                    dependent: :destroy
 
   has_many :base_layers, class_name: 'Carto::Layer',
                          order: '"order"',
                          through: :layers_maps,
                          source: :layer
 
-  has_one :user_table, class_name: Carto::UserTable, inverse_of: :map
+  has_one :user_table, class_name: Carto::UserTable, inverse_of: :map, dependent: :destroy
 
   belongs_to :user
 
   has_one :visualization, class_name: Carto::Visualization, inverse_of: :map
 
+  # bounding_box_sw, bounding_box_new and center should probably be JSON serialized fields
+  # However, many callers expect to get an string (and do the JSON deserialization themselves), mainly in presenters
+  # So for now, we are just treating them as strings (see the .to_s in the constant below), but this could be improved
   DEFAULT_OPTIONS = {
     zoom:            3,
-    bounding_box_sw: [BoundingBoxHelper::DEFAULT_BOUNDS[:minlat], BoundingBoxHelper::DEFAULT_BOUNDS[:minlon]],
-    bounding_box_ne: [BoundingBoxHelper::DEFAULT_BOUNDS[:maxlat], BoundingBoxHelper::DEFAULT_BOUNDS[:maxlon]],
+    bounding_box_sw: [BoundingBoxHelper::DEFAULT_BOUNDS[:minlat], BoundingBoxHelper::DEFAULT_BOUNDS[:minlon]].to_s,
+    bounding_box_ne: [BoundingBoxHelper::DEFAULT_BOUNDS[:maxlat], BoundingBoxHelper::DEFAULT_BOUNDS[:maxlon]].to_s,
     provider:        'leaflet',
-    center:          [30, 0]
+    center:          [30, 0].to_s
   }.freeze
 
   serialize :options, ::Carto::CartoJsonSerializer
@@ -38,15 +45,15 @@ class Carto::Map < ActiveRecord::Base
   after_commit :force_notify_map_change
 
   def data_layers
+    layers.select(&:data_layer?)
+  end
+
+  def carto_layers
     layers.select(&:carto?)
   end
 
   def user_layers
     layers.select(&:user_layer?)
-  end
-
-  def carto_and_torque_layers
-    layers.select { |layer| layer.carto? || layer.torque? }
   end
 
   def torque_layers
@@ -151,7 +158,7 @@ class Carto::Map < ActiveRecord::Base
   end
 
   def can_add_layer?(user)
-    return false if user.max_layers && user.max_layers <= carto_and_torque_layers.count
+    return false if user.max_layers && user.max_layers <= data_layers.count
 
     visualization.writable_by?(user)
   end
@@ -161,6 +168,12 @@ class Carto::Map < ActiveRecord::Base
       visualization.privacy = Carto::Visualization::PRIVACY_PRIVATE
       visualization.save
     end
+  end
+
+  def recalculate_bounds!
+    CartoDB::Logger.debug(message: "Carto::Map#recalculate_bounds!")
+    set_boundaries(get_map_bounds)
+    save
   end
 
   private
@@ -181,6 +194,12 @@ class Carto::Map < ActiveRecord::Base
   end
 
   def ensure_options
+    self.zoom ||= DEFAULT_OPTIONS[:zoom]
+    self.bounding_box_sw ||= DEFAULT_OPTIONS[:bounding_box_sw]
+    self.bounding_box_ne ||= DEFAULT_OPTIONS[:bounding_box_ne]
+    self.center ||= DEFAULT_OPTIONS[:center]
+    self.provider ||= DEFAULT_OPTIONS[:provider]
+
     self.options ||= {}
     options[:dashboard_menu] = true if options[:dashboard_menu].nil?
     options[:layer_selector] = false if options[:layer_selector].nil?
@@ -205,4 +224,7 @@ class Carto::Map < ActiveRecord::Base
     [from_table, data_layers.map(&:updated_at)].flatten.compact.max
   end
 
+  def table_name
+    user_table.try(:name)
+  end
 end

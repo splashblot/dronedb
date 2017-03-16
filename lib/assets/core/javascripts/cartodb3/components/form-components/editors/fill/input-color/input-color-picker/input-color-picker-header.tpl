@@ -8,7 +8,7 @@
         <span class="label js-label"><%- label %></span>
       </div>
 
-      <% if (isCategorized && iconStylingEnabled) { %>
+      <% if (isCategorized && imageEnabled) { %>
         <div class='CDB-ListDecoration-secondaryContainer'>
           <nav class='CDB-NavMenu'>
             <ul class='CDB-NavMenu-Inner CDB-NavMenu-inner--no-margin js-menu'>
@@ -39,7 +39,7 @@
     <li class="CDB-ListDecoration-item CDB-ListDecoration-itemPadding--vertical CDB-Text CDB-Size-medium u-secondaryTextColor">
       <ul class="ColorBarContainer ColorBarContainer--rampEditing">
         <% _.each(ramp, function (color, i) { %>
-        <li class="ColorBar is-link ColorBar--spaceless js-color<%- i === index ? ' is-selected' : '' %>" data-label="<%- color.title %>" data-color="<%- color.color %>" style="background-color: <%- color.color %>;"></li>
+        <li class="ColorBar is-link ColorBar--spaceless ColorBar--clickable js-color<%- i === index ? ' is-selected' : '' %>" data-label="<%- color.title %>" data-color="<%- color.color %>" style="background-color: <%- color.color %>;"></li>
         <% }); %>
       </ul>
       <div class="OpacityEditor">
