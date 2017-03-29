@@ -12,11 +12,12 @@ module CartoDB
   module Importer2
     class Unp
       HIDDEN_FILE_REGEX     = /^(\.|\_{2})/
-      COMPRESSED_EXTENSIONS = %w{ .zip .gz .tgz .tar.gz .bz2 .tar .kmz .rar .carto }.freeze
+      DRONE_ZIP_EXTENSIONS  = %w{ .dji .odm }.freeze
+      COMPRESSED_EXTENSIONS = %w{ .zip .gz .tgz .tar.gz .bz2 .tar .kmz .rar .carto .dji }.freeze
       SUPPORTED_FORMATS     = %w{
         .csv .shp .ods .xls .xlsx .tif .tiff .kml .kmz
         .js .json .tar .gz .tgz .osm .bz2 .geojson .gpkg
-        .gpx .tab .tsv .txt
+        .gpx .tab .tsv .txt .jpg
       }
       SPLITTERS = [KmlSplitter, OsmSplitter, GpxSplitter]
 
@@ -62,6 +63,10 @@ module CartoDB
         self
       end
 
+      def drone_zip?(path)
+        DRONE_ZIP_EXTENSIONS.include?(File.extname(path).downcase)
+      end
+
       def compressed?(path)
         COMPRESSED_EXTENSIONS.include?(File.extname(path).downcase)
       end
@@ -88,7 +93,11 @@ module CartoDB
       def extract(path)
         raise ExtractionError unless File.exists?(path)
 
-        local_path = "#{temporary_directory}/#{File.basename(path)}"
+        if drone_zip?(path)
+          local_path = "#{temporary_directory}/#{File.basename(path)}"
+        else
+          local_path = "#{temporary_directory}/#{File.basename(path)}.zip"
+        end
         FileUtils.cp(path, local_path)
 
 

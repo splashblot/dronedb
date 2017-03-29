@@ -246,6 +246,50 @@ namespace :cartodb do
       }, threads, thread_sleep, database_host)
     end
 
+
+    desc 'Sleep until cartodb users are added to database'
+    task :wait_for_cartodb_users, [:database_host, :sleep] => :environment do |task_name, args|
+      raise "Sample usage: rake cartodb:db:wait_for_cartodb_users['127.0.0.1']" if args[:database_host].blank?
+
+      database_host = args[:database_host]
+      seconds = args[:sleep].blank? ? 30 : args[:sleep].to_i
+
+      puts "Checking cartodb users in database with following config:"
+      puts "database_host: #{database_host}"
+      puts "sleep: #{seconds}"
+
+      begin
+        ::Rails::Sequel.connection.test_connection
+      rescue => e
+        sleep seconds
+        puts "No DB up yet! #{e}"
+        retry
+      end
+      puts "DB up."
+
+      while ::Rails::Sequel.connection.test_connection == false
+        sleep seconds
+        puts "DB not ready yet!"
+      end
+      puts "DB ready."
+
+      begin
+        ::User.where(database_host: database_host).count
+      rescue => e
+        sleep seconds
+        puts "No DB schema yet! #{e}"
+        retry
+      end
+      puts "DB schema in."
+
+      while ::User.where(database_host: database_host).count == 0 do
+        sleep seconds
+        puts "No users in DB yet!"
+      end
+      puts "User(s) in DB."
+    end
+
+
     desc 'Upgrade cartodb postgresql extension'
     task :upgrade_postgres_extension, [:database_host, :version, :sleep, :statement_timeout] => :environment do |task_name, args|
       raise "Sample usage: rake cartodb:db:upgrade_postgres_extension['127.0.0.1','0.5.2']" if args[:database_host].blank? or args[:version].blank?

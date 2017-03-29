@@ -18,9 +18,9 @@
                   <img src="<%= @organization.avatar_url %>" alt="<%= @organization.name %> organization">
                 <% else %>
                   <% if @organization.present? %>
-                    <%= image_tag("layout/carto-logo-darkblue.svg", :alt => "CARTO") %>
+                    <%= image_tag("layout/tileo-logo-darkblue.svg", :alt => "TILEO") %>
                   <% else %>
-                    <%= image_tag("layout/carto-logo.svg", :alt => "CARTO") %>
+                    <%= image_tag("layout/tileo-logo.svg", :alt => "TILEO") %>
                   <% end %>
                 <% end %>
               </picture>
@@ -110,14 +110,4 @@
       </div>
     </div>
   </div>
-
-  <% unless cartodb_com_hosted? %>
-    <footer class="Sessions-footer">
-      <div class="u-inner">
-        <div class="Sessions-notloggedin <%= "is-active" unless @google_plus_config.present? %>">
-          <p class="Sessions-text Sessions-text--footer u-txt-center u-altTextColor">Don't have an account yet? <%= link_to 'Sign up here', "https://carto.com/signup" %></p>
-        </div>
-      </div>
-    </footer>
-  <% end %>
 </div>
