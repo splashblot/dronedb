@@ -7,3 +7,13 @@
   </button>
 </nav>
 <div class="Editor-content js-content"></div>
+<div class="Editor-content js-content"></div>
+<div class="CDB-Text">
+	<h2 class="CDB-Size-large">Raster tiled layers</h2>
+	<div class="raster-tiled-layers-content">
+		<span id="message-raster-layer" style="display:none"></span>
+		<input type="text" name="rasterurl" placeholder="Layer URL"><button> Add layer</button>
+		<p>Layers:</p>
+		<ul></ul>
+	</div>
+</div>
