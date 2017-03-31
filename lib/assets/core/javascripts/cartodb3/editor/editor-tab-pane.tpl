@@ -7,8 +7,7 @@
   </button>
 </nav>
 <div class="Editor-content js-content"></div>
-<div class="Editor-content js-content"></div>
-<div class="CDB-Text">
+<div class="CDB-Text Editor-ListLayer-item-raster">
 	<h2 class="CDB-Size-large">Raster tiled layers</h2>
 	<div class="raster-tiled-layers-content">
 		<span id="message-raster-layer" style="display:none"></span>
