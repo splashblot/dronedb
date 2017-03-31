@@ -318,3 +318,11 @@
   text-align: center;
   z-index: -1;
 }
+
+.Editor-ListLayer-item-raster {
+    top: -60%;
+    position: relative;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 16px;
+}
