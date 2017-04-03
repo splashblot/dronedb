@@ -11,7 +11,10 @@
 	<h2 class="CDB-Size-large">Raster tiled layers</h2>
 	<div class="raster-tiled-layers-content">
 		<span id="message-raster-layer" style="display:none"></span>
-		<input type="text" name="rasterurl" placeholder="Layer URL"><button> Add layer</button>
+		<span class="CDB-NavMenu-inner CDB-Text is-semibold CDB-Size-medium">
+			<input type="text" name="rasterurl" placeholder="Layer URL" id="layersInputEdit">
+			<button class="Editor-buttonNavigation CDB-Button CDB-Button--small CDB-Button--primary">ADD</button>
+		</span>
 		<p>Layers:</p>
 		<ul></ul>
 	</div>
