@@ -24,7 +24,8 @@ module CartoDB
         self.webmercator_filepath = WEBMERCATOR_FILENAME % [ filepath.gsub(/\.tif$/, '') ]
         self.aligned_filepath     = ALIGNED_WEBMERCATOR_FILENAME % [ filepath.gsub(/\.tif$/, '') ]
         self.downsampled_filepath = DOWNSAMPLED_FILENAME % [ filepath.gsub(/\.tif$/, '') ]
-        self.tiled_dirpath        = self.basepath % 'tiles_z' % ZOOM_LEVELS
+        self.tiled_dirpath        = '/tmp/tiles_z' + ZOOM_LEVELS
+        # self.tiled_dirpath        = basepath + 'tiles_z' + ZOOM_LEVELS
         self.pg_options           = pg_options
         self.table_name           = table_name
         self.exit_code            = nil
@@ -77,7 +78,7 @@ module CartoDB
 
       attr_writer   :exit_code, :command_output
       attr_accessor :filepath, :pg_options, :table_name, :webmercator_filepath, :aligned_filepath, \
-                    :basepath, :additional_tables, :db, :base_table_fqtn, :downsampled_filepath
+                    :basepath, :additional_tables, :db, :base_table_fqtn, :downsampled_filepath, :tiled_dirpath
 
       def downsample_raster
         gdal_translate_command = [gdal_translate_path, '-scale', '-ot', 'Byte', GDALWARP_COMMON_OPTIONS, filepath, downsampled_filepath].flatten
@@ -206,13 +207,6 @@ module CartoDB
         ]
       end
 
-      # gdal2tiles.py -z 16-25 -n -w none rg_lechugasgs_transparent_mosaic_group1.tif tiles-ortho
-      def gdal2tiles_command(overviews_list)
-        [
-          gdal2tiles_path, '-z', ZOOM_LEVELS.to_s, '-n', '-w none', filepath, tiled_dirpath
-        ]
-      end
-
       # We add an overview for the tiler with factor = 1,
       # using the reprojected and adjusted base table. This is done so that the
       # tiler will always use those overviews and never the base table that
@@ -254,7 +248,7 @@ module CartoDB
       end
 
       def tile_original_raster
-        gdal2tiles_command = [gdal2tiles_path, '-z', ZOOM_LEVELS.to_s, '-n', '-w none', filepath, tiled_dirpath]
+        gdal2tiles_command = [gdal2tiles_path, '-z', ZOOM_LEVELS.to_s, '-n', '-wnone', filepath, tiled_dirpath]
         # TODO: move to Carto Gears engine
         pipeline = [gdal2tiles_command]
         Open3.pipeline_r(*pipeline, err: :out) do |output_st, statuses|
