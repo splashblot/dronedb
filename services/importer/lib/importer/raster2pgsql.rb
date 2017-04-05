@@ -7,6 +7,7 @@ module CartoDB
     class Raster2Pgsql
       SCHEMA                        = 'cdb_importer'
       PROJECTION                    = 3857
+      ZOOM_LEVELS                   = '16-21'
       BLOCKSIZE                     = '128x128'
       DOWNSAMPLED_FILENAME          = '%s_downsampled.tif'
       WEBMERCATOR_FILENAME          = '%s_webmercator.tif'
@@ -23,6 +24,7 @@ module CartoDB
         self.webmercator_filepath = WEBMERCATOR_FILENAME % [ filepath.gsub(/\.tif$/, '') ]
         self.aligned_filepath     = ALIGNED_WEBMERCATOR_FILENAME % [ filepath.gsub(/\.tif$/, '') ]
         self.downsampled_filepath = DOWNSAMPLED_FILENAME % [ filepath.gsub(/\.tif$/, '') ]
+        self.tiled_dirpath        = self.basepath % 'tiles_z' % ZOOM_LEVELS
         self.pg_options           = pg_options
         self.table_name           = table_name
         self.exit_code            = nil
@@ -54,6 +56,7 @@ module CartoDB
 
         add_raster_base_overview_for_tiler
         import_original_raster
+        tile_original_raster
 
         self
       end
@@ -203,6 +206,13 @@ module CartoDB
         ]
       end
 
+      # gdal2tiles.py -z 16-25 -n -w none rg_lechugasgs_transparent_mosaic_group1.tif tiles-ortho
+      def gdal2tiles_command(overviews_list)
+        [
+          gdal2tiles_path, '-z', ZOOM_LEVELS.to_s, '-n', '-w none', filepath, tiled_dirpath
+        ]
+      end
+
       # We add an overview for the tiler with factor = 1,
       # using the reprojected and adjusted base table. This is done so that the
       # tiler will always use those overviews and never the base table that
@@ -243,6 +253,25 @@ module CartoDB
         end
       end
 
+      def tile_original_raster
+        gdal2tiles_command = [gdal2tiles_path, '-z', ZOOM_LEVELS.to_s, '-n', '-w none', filepath, tiled_dirpath]
+        # TODO: move to Carto Gears engine
+        pipeline = [gdal2tiles_command]
+        Open3.pipeline_r(*pipeline, err: :out) do |output_st, statuses|
+          status = statuses.last.value
+          output = output_st.read
+          output_message = "(#{status}) |#{output}| Command: #{pipeline}"
+          self.command_output << "\n#{output_message}"
+          self.exit_code = status.to_i
+
+          if output =~ /canceling statement due to statement timeout/i
+            raise StatementTimeoutError.new(output_message, ERRORS_MAP[StatementTimeoutError])
+          end
+
+          raise TiffToSqlConversionError.new(output_message)  if status.to_i != 0
+        end
+      end
+
       def psql_base_command
         host      = pg_options.fetch(:host)
         port      = pg_options.fetch(:port)
@@ -254,6 +283,10 @@ module CartoDB
 
       def raster2pgsql_path
         `which raster2pgsql`.strip
+      end
+
+      def gdal2tiles_path
+        `which gdal2tiles.py`.strip
       end
 
       def psql_path
