@@ -55,11 +55,11 @@
       <div class="FormAccount-rowInfo">
         <% if !current_user.organization.present? %>
           <p class="CDB-Text CDB-Size-small u-altTextColor">
-            This is your Google Maps query string, contact with <a href="mailto:support@tileo.co">support@tileo.co</a> to change it.
+            This is your Google Maps query string, contact <a href="mailto:support@tileo.co">support@tileo.co</a> to change it.
           </p>
         <% elsif current_user.organization.present? && current_user.organization_owner? %>
           <p class="CDB-Text CDB-Size-small u-altTextColor">
-            This is the <%= current_user.organization.name %> Google Maps query string, contact with <a href="mailto:support@tileo.co">support@tileo.co</a> to change it.
+            This is the <%= current_user.organization.name %> Google Maps query string, contact <a href="mailto:support@tileo.co">support@tileo.co</a> to change it.
           </p>
         <% else %>
           <p class="CDB-Text CDB-Size-small u-altTextColor">This is the organization Google Maps API key</p>

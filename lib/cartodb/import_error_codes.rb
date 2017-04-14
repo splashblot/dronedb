@@ -206,7 +206,7 @@ module CartoDB
     },
     2010 => {
       title: 'Incompatible CARTO table',
-      what_about: "There was an error when converting your table into a CARTO table. Please <a href='mailto:support@tileo.co?subject=CartoDBfy error'>contact us</a> and we will help you to load your data.",
+      what_about: "There was an error when converting your table into a TILEO table. Please <a href='mailto:support@tileo.co?subject=CartoDBfy error'>contact us</a> and we will help you to load your data.",
       source: ERROR_SOURCE_USER
     },
     2011 => {
