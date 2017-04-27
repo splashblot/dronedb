@@ -318,3 +318,29 @@
   text-align: center;
   z-index: -1;
 }
+
+.Editor-ListLayer-item-raster {
+    position: absolute;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 16px;
+    width: calc(100% - 30px);
+    #message-raster-layer {
+      font-size: 12px;
+      line-height: 14px;
+      color: #636D72;
+      padding: 3px 0;
+      &.error {
+        background: rgba(255, 255, 0, 0.3);
+      }
+    }
+    .CDB-NavMenu-inner {
+      display: block;
+    }
+    .CDB-NavMenu-inner {
+      border: 0;
+    }
+    .remove-tiled-layer {
+      cursor: pointer;
+    }
+}
