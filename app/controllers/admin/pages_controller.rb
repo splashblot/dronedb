@@ -66,7 +66,7 @@ class Admin::PagesController < Admin::AdminController
         order:    'updated_at',
         o:        {updated_at: :desc},
         exclude_shared: true,
-        exclude_raster: true
+        exclude_raster: false
       })
     end
 

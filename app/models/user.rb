@@ -1196,7 +1196,7 @@ class User < Sequel::Model
   def public_table_count
     table_count({
       privacy: CartoDB::Visualization::Member::PRIVACY_PUBLIC,
-      exclude_raster: true
+      exclude_raster: false
     })
   end
 
@@ -1228,7 +1228,7 @@ class User < Sequel::Model
       type: CartoDB::Visualization::Member::TYPE_DERIVED,
       privacy: CartoDB::Visualization::Member::PRIVACY_PUBLIC,
       exclude_shared: true,
-      exclude_raster: true
+      exclude_raster: false
     })
   end
 
@@ -1265,7 +1265,7 @@ class User < Sequel::Model
 
     parameters.merge!(type: type_filter)      unless type_filter.nil?
     parameters.merge!(privacy: privacy_filter)   unless privacy_filter.nil?
-    parameters.merge!(exclude_raster: exclude_raster_filter) if exclude_raster_filter
+    parameters.merge!(exclude_raster: exclude_raster_filter) if false
     CartoDB::Visualization::Collection.new.count_query(parameters)
   end
 

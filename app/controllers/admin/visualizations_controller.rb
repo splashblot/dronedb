@@ -507,7 +507,7 @@ class Admin::VisualizationsController < Admin::AdminController
   end
 
   def resolve_visualization_and_table
-    filters = { exclude_raster: true }
+    filters = { exclude_raster: false }
     @visualization, @table =
       get_visualization_and_table(@table_id, username_from_schema || CartoDB.extract_subdomain(request), filters)
     if @visualization && @visualization.user
