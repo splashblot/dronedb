@@ -5,9 +5,9 @@ module CartoDB
     module Doubles
       class User
 
-        DEFAULT_MAX_IMPORT_FILE_SIZE = 150*1024*1024
-        DEFAULT_MAX_IMPORT_TABLE_ROW_COUNT = 500*1000
-        DEFAULT_DATABASE_TIMEOUT = 300000
+        DEFAULT_MAX_IMPORT_FILE_SIZE = 1500*1024*1024
+        DEFAULT_MAX_IMPORT_TABLE_ROW_COUNT = 5000*1000
+        DEFAULT_DATABASE_TIMEOUT = 3000000
 
         def initialize(attributes={})
           @username = attributes.fetch(:username, 'user_mock')
