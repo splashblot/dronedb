@@ -30,7 +30,7 @@
     "max": "MAX"
   },
   "builder-activated-notification": {
-    "message": "CARTO Builder has been activated in your account. <a href='https://carto.com/learn/guides' class='onboardingNotification-link'>Learn more</a> about it and let us know what you think or <a href='mailto:builder-support@carto.com' class='onboardingNotification-link'>contact us</a>. Happy mapping!"
+    "message": "CARTO Builder has been activated in your account. <a href='https://carto.com/blog/categories/new-features' class='onboardingNotification-link'>Learn more</a> about it and let us know what you think or <a href='mailto:support@tileo.co' class='onboardingNotification-link'>contact us</a>. Happy mapping!"
   },
   "builder-onboarding": {
     "title": "Welcome to Builder,",
@@ -413,7 +413,7 @@
         "close": "close",
         "description": "There was a problem georeferencing your data",
         "title": "Geocoding Error",
-        "try-again": "Please try again and if the problem persists, <a href='mailto:support@carto.com?subject=Geocoding error with id:%{id}'>contact us</a> with the following code:",
+        "try-again": "Please try again and if the problem persists, <a href='mailto:support@tileo.co?subject=Geocoding error with id:%{id}'>contact us</a> with the following code:",
         "view-dataset": "view dataset"
       },
       "geocoding-success-detail": {
@@ -452,7 +452,7 @@
         "continue-btn": "Continue",
         "too-many-datasets": "NOTE: The file you uploaded contained too many datasets. No more than %{maxTablesPerImport} datasets can be imported from a single file.",
         "unable-to-import-as-layers": "Unable to add all imported datasets as layers",
-        "upgrade-your-account": "<a href='https://carto.com/pricing/'>Upgrade your account</a> to add more than %{userMaxLayers} layers to your maps."
+        "upgrade-your-account": "<a href='sales@tileo.co'>Upgrade your account</a> to add more than %{userMaxLayers} layers to your maps."
       },
       "connector-warning-details": {
         "continue-btn": "Continue",
@@ -465,7 +465,7 @@
         "close": "close",
         "dont-panic": "Don’t panic, here's some info that might help",
         "remote-server-code": "The remote server returned a <span class='ErrorDetails-itemTextStrong'>%{httpResponseCode}</span> code.",
-        "send-us-the-error-code": "Persisting error? Please <a href='mailto:support@carto.com'>send us</a> the following code",
+        "send-us-the-error-code": "Persisting error? Please <a href='mailto:support@tileo.co'>send us</a> the following code",
         "unknown-error": "An unknown error has happened"
       },
       "upgrade-errors": {
@@ -739,7 +739,7 @@
             "title": "Interested in sharing within your organization?",
             "desc": "%{contact} to try one of our Enterprise plans",
             "contact": "Contact us",
-            "mail": "sales@carto.com"
+            "mail": "sales@tileo.co"
           },
           "loading": "Saving your data..."
         },
@@ -817,7 +817,7 @@
         "delete-images": "Delete images",
         "deselect-all": "Deselect all",
         "drag-and-drop": "Drag & drop your file",
-        "error-desc": "Please, go back and try again. If the problem persists contact us at <a href='mailto:support@carto.com'>support@carto.com</a>",
+        "error-desc": "Please, go back and try again. If the problem persists contact us at <a href='mailto:support@tileo.co'>support@tileo.co</a>",
         "go-back": "Go back",
         "incorrect-url": "Error. Your URL doesn’t look correct.",
         "loading": "Loading…",
@@ -1123,7 +1123,7 @@
     },
     "error": {
       "default-title": "Oops, there was a problem",
-      "default-desc": "Reload the page again. If the problem persists contact us at <a href='mailto:support@carto.com'>support@carto.com</a>"
+      "default-desc": "Reload the page again. If the problem persists contact us at <a href='mailto:support@tileo.co'>support@tileo.co</a>"
     },
     "backbone-forms": {
       "select": {
@@ -1755,8 +1755,8 @@
             }
           },
           "emails": {
-            "support": "support@carto.com",
-            "saas": "sales@carto.com"
+            "support": "support@tileo.co",
+            "saas": "sales@tileo.co"
           },
           "quota-error-title": "Error",
           "quota-fetch-error": "There was an error obtaining your quota: %{error}.",
@@ -2317,7 +2317,7 @@
       "removed": "Analysis %{nodeId} deleted",
       "contact": {
         "label": "contact us",
-        "mail": "support@carto.com"
+        "mail": "support@tileo.co"
       },
       "sample": "sample",
       "errors": {
