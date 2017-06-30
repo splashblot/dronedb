@@ -259,7 +259,7 @@ namespace :cartodb do
       puts "sleep: #{seconds}"
 
       begin
-        ::Rails::Sequel.connection.test_connection
+        ::SequelRails.connection.test_connection
       rescue => e
         sleep seconds
         puts "No DB up yet! #{e}"
@@ -267,7 +267,7 @@ namespace :cartodb do
       end
       puts "DB up."
 
-      while ::Rails::Sequel.connection.test_connection == false
+      while ::SequelRails.connection.test_connection == false
         sleep seconds
         puts "DB not ready yet!"
       end
