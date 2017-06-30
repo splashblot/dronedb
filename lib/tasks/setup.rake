@@ -65,7 +65,7 @@ DESC
       u.organization = organization
       u.password_confirmation = ENV['PASSWORD']
       u.username = ENV['USERNAME']
-      u.database_host = ENV['DATABASE_HOST'] || ::Rails::Sequel.configuration.environment_for(Rails.env)['host']
+      u.database_host = ENV['DATABASE_HOST'] || ::SequelRails.configuration.environment_for(Rails.env)['host']
 
       if ENV['BUILDER_ENABLED'] == "true"
         u.builder_enabled = true
