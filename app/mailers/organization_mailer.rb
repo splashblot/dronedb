@@ -4,8 +4,8 @@ class OrganizationMailer < ActionMailer::Base
 
   def quota_limit_reached(organization)
     @organization = organization
-    @subject = "Your organization #{@organization.name} has reached its quota"
-    @link = "mailto:support@carto.com"
+    @subject = "Tu organización #{@organization.name} ha alcanzado el límite de cuota"
+    @link = "mailto:support@tileo.co"
 
     mail to: @organization.owner.email,
          subject: @subject
@@ -14,7 +14,7 @@ class OrganizationMailer < ActionMailer::Base
   def invitation(invitation, email)
     @invitation = invitation
 
-    @subject = "You are invited to join the #{@invitation.organization.name} organization at CARTO #{@invitation.viewer? ? 'as a viewer' : ''}"
+    @subject = "Te han invitado a formar parte de la organización #{@invitation.organization.name} en Tileo"
 
     base_url = CartoDB.base_url(@invitation.organization.name)
     token = invitation.token(email)
@@ -25,8 +25,8 @@ class OrganizationMailer < ActionMailer::Base
 
   def seat_limit_reached(organization)
     @organization = organization
-    @subject = "Your organization #{@organization.name} has reached its seat limit"
-    @link = "mailto:support@carto.com"
+    @subject = "Tu organización #{@organization.name} ha alcanzado el límite de usuarios"
+    @link = "mailto:support@tileo.co"
 
     mail to: @organization.owner.email,
          subject: @subject

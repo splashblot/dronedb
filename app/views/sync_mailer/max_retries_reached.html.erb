@@ -1,13 +1,13 @@
-<%- message = "<strong>Error code: #{@error_code}</strong> - #{@error_message.html_safe}" %>
+<%- message = "<strong>Código de error: #{@error_code}</strong> - #{@error_message.html_safe}" %>
 
 <%= render partial: 'mailer_modules/warning_message', locals: { message: message } %>
 
 <tr>
   <td align="left" style="font-size: 14px; line-height: 25px; font-family: 'Open Sans', Helvetica, Arial, sans-serif; color: #647083;">
-    <p>The automatic synchronization of your dataset <strong><%=@dataset_name %></strong> has reached the maximum number of synchronization attempts and it's still failing to sync.</p>
-    <p>If you'd like to continue trying, log in to your account and manually reactivate synching by clicking “Sync now”</p>
-    <p>For more information about error messages and possible solution, <a href="https://carto.com/docs/carto-engine/import-api/import-errors/" target="_blank" style="color: #1181FB;">click here</a>.</p>
+    <p>La sincronización automática de tu dataset <strong><%=@dataset_name %></strong> ha alcanzado el número máximo de intentos de sincronización y aún no ha sido posible volver a sincronizar.</p>
+    <p>Si quieres volver a intentarlo, inicia sesión en tu cuenta y reactiva manualmente la sincronización pulsando el botón "Sincronizar ahora".</p>
+    <p>Para más información sobre mensajes de error y posibles soluciones, <a href="https://carto.com/docs/carto-engine/import-api/import-errors/" target="_blank" style="color: #1181FB;">pulsa aquí</a>.</p>
   </td>
 </tr>
 
-<%= render partial: 'mailer_modules/link_to_action', locals: { link: @link, link_text: "View your dataset" } %>
+<%= render partial: 'mailer_modules/link_to_action', locals: { link: @link, link_text: "Ir al dataset" } %>

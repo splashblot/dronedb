@@ -28,15 +28,15 @@ class ImportMailer < ActionMailer::Base
   def set_subject
     if @total_tables == 1
       if @errors.nil?
-        subject = "Your dataset import just finished"
+        subject = "Tu dataset ha terminado de importarse"
       else
-        subject = "There was some error while importing your dataset"
+        subject = "Algo ha ido mal mientras tu dataset se exportaba"
       end
     else
       if @imported_tables == 0
-        subject = "There was some error while importing your datasets"
+        subject = "Algo ha ido mal mientras tus datasets se exportaban"
       else
-        subject = "Your datasets import just finished"
+        subject = "Tus datasets han terminado de importarse"
       end
     end
 
