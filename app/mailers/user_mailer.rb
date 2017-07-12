@@ -25,7 +25,7 @@ class UserMailer < ActionMailer::Base
     @user = user
     organization = @table_visualization.user.organization
     @link = "#{CartoDB.base_url(organization.name, @user.username)}#{CartoDB.path(self, 'public_tables_show_bis', {id: "#{@table_visualization.user.username}.#{@table_visualization.name}"})}"
-    @subject = "#{@table_visualization.user.username} has shared a CARTO dataset with you"
+    @subject = "#{@table_visualization.user.username} ha compartido un dataset en Tileo contigo"
     mail :to => @user.email,
          :subject => @subject
   end
