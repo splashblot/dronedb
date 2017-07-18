@@ -69,4 +69,6 @@ CartoDB::Application.configure do
   config.action_controller.asset_host = Proc.new do
     Cartodb.asset_path
   end
+
+  SslRequirement.disable_ssl_check = true
 end
