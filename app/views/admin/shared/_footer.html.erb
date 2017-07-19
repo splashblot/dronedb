@@ -1,19 +1,15 @@
-<% light = false if !light.present? %>
+<div class='TL-Footer'>
+  <div class='TL-Footer-inner'>
+    <div class='TL-Footer-row1'>
+      <div class='TL-Footer-logo'></div>
+      <div class='TL-Footer-copyright'>© 2017 Tileo, Inc.</div>
+    </div>
 
-<div class="CDB-Text CDB-FontSize-medium u-tSpace-xl Footer <%= 'Footer--light' if light %>">
-  <div class="u-inner Footer-inner">
-    <ul class="Footer-list Footer-list--primary">
-      <% unless cartodb_com_hosted? %>
-        <li class="Footer-listItem CDB-Text CDB-Size-medium"><a href="https://carto.com/learn/guides/">Guides</a></li>
-        <li class="Footer-listItem CDB-Text CDB-Size-medium"><a href="https://carto.com/docs">Documentation</a></li>
-      <% end %>
-      <% unless cartodb_onpremise_version.blank? %>
-        <li class="Footer-listItem CDB-Text CDB-Size-medium">Version: <%= cartodb_onpremise_version %></li>
-      <% end %>
-    </ul>
-
-    <ul class="Footer-list Footer-list--secondary">
-      <li class="Footer-listItem CDB-Text CDB-Size-medium"><a href="mailto:info@tileo.co">Contact us</a></li>
-    </ul>
+    <div class='TL-Footer-row2'>
+      <ul class='TL-Footer-linksList'>
+        <li class='TL-Footer-linksList-link'><a href="mailto:info@tileo.co">Contact us</a></li>
+      </ul>
+    </div>
   </div>
+
 </div>
