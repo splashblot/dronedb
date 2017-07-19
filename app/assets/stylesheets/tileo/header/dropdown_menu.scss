@@ -1,0 +1,61 @@
+@import '../common/colors';
+
+/* Header dropdown menu */
+.TL-HeaderDropdown {
+  display: none;
+  position: absolute;
+  width: 192px;
+  margin-top: 2px;
+  margin-left: -159px;
+  background-color: $white;
+  border: 1px solid $silver;
+  border-radius: 4px;
+  z-index: 99;
+}
+.TL-Header-row3:hover .TL-HeaderDropdown {
+  display: block;
+}
+.TL-HeaderDropdown-info {
+  background-color: $pale-grey;
+  padding: 8px;
+  border-radius: 4px 4px 0 0;
+}
+.TL-HeaderDropdown-username {
+  color: $black;
+  font-family: 'Open Sans';
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 17px;
+}
+.TL-HeaderDropdown-orgName {
+  color: $black;
+  font-family: 'Open Sans';
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+.TL-HeaderDropdown-menu {
+  padding: 0 8px;
+
+}
+.TL-HeaderDropdown-menuItem {
+  padding: 8px 0;
+  color: $black;
+  font-family: 'Open Sans';
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 17px;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid $pale-grey;
+  }
+}
+
+.TL-HeaderDropdown-menuItem a {
+  color: $black;
+
+  &:hover {
+    color: $bright-blue;
+  }
+}
