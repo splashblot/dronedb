@@ -23,9 +23,9 @@
                   <img src="<%= @organization.avatar_url %>" alt="<%= @organization.name %> organization">
                 <% else %>
                   <% if @organization.present? %>
-                    <%= image_tag("layout/tileo-logo-darkblue.svg", :alt => "TILEO") %>
+                    <%= image_tag("tileo/logo/tileo-white_logo_combination.svg", :alt => "Tileo") %>
                   <% else %>
-                    <%= image_tag("layout/tileo-logo.svg", :alt => "TILEO") %>
+                    <%= image_tag("tileo/logo/tileo-white_logo_combination.svg", :alt => "Tileo") %>
                   <% end %>
                 <% end %>
               </picture>
