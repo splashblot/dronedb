@@ -390,8 +390,10 @@ module CartoDB
 
       def result_for(job, source_file, table_names, support_table_names=[], exception_klass=nil)
         job.logger.store
+	name = source_file.extension != '.tif'? source_file.name : source_file.name + '_raster'
+	puts name
         Result.new(
-          name:           source_file.name,
+          name:           name,
           schema:         source_file.target_schema,
           extension:      source_file.extension,
           etag:           source_file.etag,
