@@ -1,4 +1,4 @@
-<% content_for :title do %><%= @organization.name %> sign up<% end %>
+<% content_for :title do %>Registro en <%= @organization.name %><% end %>
 
 <% content_for :js do %>
   <%= javascript_include_tag 'cdb.js', 'signup.js' %>
@@ -56,14 +56,14 @@
               <div class="Sessions-fieldsGroup">
                 <% if @organization.auth_username_password_enabled || duplicated_username_prompt? %>
                   <div class="Sessions-field">
-                    <%= f.text_field :username, class: "CDB-Size-medium Sessions-input topBorderRadius", placeholder: 'Username' %>
+                    <%= f.text_field :username, class: "CDB-Size-medium Sessions-input topBorderRadius", placeholder: 'Usuario' %>
                     <% if !@user.errors[:username].blank? %>
                       <div class="Sessions-fieldError js-Sessions-fieldError" data-content="<%= @user.errors[:username] %>">!</div>
                     <% end %>
                   </div>
 
                   <div class="Sessions-field">
-                    <%= f.email_field :email, class: "CDB-Size-medium Sessions-input", placeholder: 'email', readonly: params[:invitation_token].present? || duplicated_username_prompt? %>
+                    <%= f.email_field :email, class: "CDB-Size-medium Sessions-input", placeholder: 'Email', readonly: params[:invitation_token].present? || duplicated_username_prompt? %>
                     <% if !@user.errors[:email].blank? %>
                       <div class="Sessions-fieldError js-Sessions-fieldError" data-content="<%= @user.errors[:email] %>">!</div>
                     <% end %>
@@ -77,7 +77,7 @@
                   <input type="hidden" name="github_access_token" value="<%= @github_access_token %>" />
                 <% elsif @organization.auth_username_password_enabled %>
                   <div class="Sessions-field">
-                    <%= f.password_field :password, class: "CDB-Size-medium Sessions-input bottomBorderRadius", placeholder: 'Password' %>
+                    <%= f.password_field :password, class: "CDB-Size-medium Sessions-input bottomBorderRadius", placeholder: 'Contraseña' %>
                     <% if !@user.errors[:password].blank? %>
                       <div class="Sessions-fieldError js-Sessions-fieldError" data-content="<%= @user.errors[:password] %>">!</div>
                     <% end %>
@@ -88,7 +88,7 @@
                   <div class="Sessions-field">
                     <p>
                       <button type="submit" class="Sessions-submitButton js-Sessions-button js-Loading">
-                        <span class="js-Loading-text">Sign up</span>
+                        <span class="js-Loading-text">Regístrate</span>
                         <span class="js-Loading-anim" style="display: none;">
                           <span class="Loading-item">
                             <span class="Loading-itemInner Loading-itemInner--01"></span>
@@ -126,7 +126,7 @@
             <% end %>
 
             <% if @organization.auth_username_password_enabled %>
-              <p class="CDB-Text CDB-Size-medium u-altTextColor u-tSpace--m u-justifyCenter Sessions-description">Please, use an email address belonging to this organization.</p>
+              <p class="CDB-Text CDB-Size-medium u-altTextColor u-tSpace--m u-justifyCenter Sessions-description">Por favor utiliza una dirección email asociada con la organización.</p>
             <% end %>
           </div>
         </div>
@@ -141,16 +141,16 @@
           Already have an account?
           <% if params[:after].present? %>
             <% if (params[:referrer].present?) %>
-              <%= link_to "Log in", login_url(after: params[:after], referrer: params[:referrer]) %>
+              <%= link_to "Entrar", login_url(after: params[:after], referrer: params[:referrer]) %>
             <% else %>
-              <%= link_to "Log in", login_url(after: params[:after]) %>
+              <%= link_to "Entrar", login_url(after: params[:after]) %>
             <% end %>
           <% else %>
-            <%= link_to "Log in", login_url %>
+            <%= link_to "Entrar", login_url %>
           <% end %>
         </p>
 
-        <p class="Sessions-text Sessions-text--footer u-altTextColor u-txt-center">By clicking in "sign up" you accept the <%= link_to 'terms and conditions', terms_path %> of the service and the <%= link_to 'privacy policy', privacy_path %></p>
+        <p class="Sessions-text Sessions-text--footer u-altTextColor u-txt-center">Haciendo click en "Entrar" aceptas los <%= link_to 'términos y condiciones', terms_path %> del servicio y la <%= link_to 'política de privacidad', privacy_path %></p>
       </div>
     </div>
   </footer>
