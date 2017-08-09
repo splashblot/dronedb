@@ -127,6 +127,8 @@ module CartoDB
       dataset_vendor.js
       common.js
 
+      tileo.css
+
       deep_insights.css
       cdb.css
       cdb/themes/css/cartodb.css

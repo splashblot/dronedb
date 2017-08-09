@@ -359,7 +359,7 @@ class Carto::Visualization < ActiveRecord::Base
   end
 
   def editable?
-    !(kind_raster? || type_slide?)
+    !(type_slide?)
   end
 
   def get_auth_tokens

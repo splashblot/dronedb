@@ -7,7 +7,7 @@ class SyncMailer < ActionMailer::Base
     @error_message = error_message
     @dataset_name = dataset_name
     @link = "#{user.public_url}#{CartoDB.path(self, 'public_tables_show', { id: visualization_id })}"
-    @subject = "There was a problem while syncing your dataset"
+    @subject = "Algo ha fallado mientras tu dataset se sincronizaba"
 
     mail :to => user.email,
          :subject => @subject

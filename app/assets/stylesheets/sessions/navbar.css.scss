@@ -24,7 +24,7 @@ $text-color: rgba(white, 0.5);
   @include justify-content(center, center);
 
   img {
-    height: 100%;
+    width: 128px;
   }
 }
 
