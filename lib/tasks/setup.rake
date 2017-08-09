@@ -47,6 +47,36 @@ DESC
       puts "User #{u.username} created successfully"
     end
 
+    task :setup_organization_user => :environment do
+      raise "You should provide a valid e-mail"            if ENV['EMAIL'].blank?
+      raise "You should provide a valid password"          if ENV['PASSWORD'].blank?
+      raise "You should provide a valid username"          if ENV['USERNAME'].blank?
+      raise "You should provide a valid organization_name" if ENV['ORGANIZATION_NAME'].blank?
+
+      organization = Organization.where(:name => ENV['ORGANIZATION_NAME']).first
+
+      # Reload User model schema to avoid errors
+      # when running this task along with db:migrate
+      ::User.set_dataset :users
+
+      u = ::User.new
+      u.email = ENV['EMAIL']
+      u.password = ENV['PASSWORD']
+      u.organization = organization
+      u.password_confirmation = ENV['PASSWORD']
+      u.username = ENV['USERNAME']
+      u.database_host = ENV['DATABASE_HOST'] || ::SequelRails.configuration.environment_for(Rails.env)['host']
+
+      if ENV['BUILDER_ENABLED'] == "true"
+        u.builder_enabled = true
+      end
+
+      u.save
+
+      raise u.errors.inspect if u.new?
+      puts "User #{u.username} created successfully inside organization #{u.organization.name}"
+    end
+
     task :create_dev_user =>
       ["cartodb:db:create_publicuser"] do
       raise "You should provide a valid e-mail"    if ENV['EMAIL'].blank?

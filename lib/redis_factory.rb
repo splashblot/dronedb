@@ -13,9 +13,10 @@ class RedisFactory
       [:host, :port, :driver, :tcp_keepalive, :timeout, :connect_timeout, :read_timeout, :write_timeout].include?(k)
     end
 
-    if ENV['REDIS_PORT']
-      redis_conf[:port] = ENV['REDIS_PORT']
-    end
+    # TODO: make sure REDIS_PORT can be used again, against the desires of the Docker Gods
+    # if ENV['REDIS_PORT']
+    #   redis_conf[:port] = ENV['REDIS_PORT']
+    # end
 
     if redis_conf[:tcp_keepalive] && redis_conf[:tcp_keepalive].is_a?(Hash)
       redis_conf[:tcp_keepalive] = redis_conf[:tcp_keepalive].symbolize_keys
