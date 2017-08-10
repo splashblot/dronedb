@@ -1,0 +1,25 @@
+@import '../common/colors';
+
+/* Sections */
+.TL-SectionContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.TL-SectionContainer-inner {
+  width: 940px;
+  margin: 32px;
+}
+.TL-SectionTitle {
+  width: 100%;
+  padding: 0 0 32px 0;
+  border-bottom: 1px solid $silver;
+}
+.TL-SectionTitle-text {
+  color: $black;
+  font-family: 'Open Sans';
+  font-weight: 300;
+  font-size: 28px;
+  line-height: 38px;
+}
