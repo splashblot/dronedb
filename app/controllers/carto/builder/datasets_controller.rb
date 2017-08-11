@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'carto/api/vizjson3_presenter'
+require 'json'
 
 require_dependency 'carto/tracking/events'
 
@@ -48,6 +49,7 @@ module Carto
       end
 
       def load_canonical_visualization
+	puts @canonical_visualization.to_json
         @canonical_visualization = load_visualization_from_id_or_name(params[:id])
         render_404 unless @canonical_visualization && @canonical_visualization.canonical?
       end
@@ -58,7 +60,7 @@ module Carto
 
       def load_user_table
         @user_table = @canonical_visualization.user_table
-        render_404 unless @user_table
+	render_404 unless @user_table || @canonical_visualization.kind === 'raster'
       end
 
       def load_auth_tokens
