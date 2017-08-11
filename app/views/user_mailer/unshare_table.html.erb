@@ -1,3 +1,3 @@
-<%- message = "<p style='margin-bottom: 0;'>Your colleague #{@table_visualization_owner_name} has stopped sharing the dataset <strong>#{@table_visualization_name}</strong> with you so it may disappear from your dashboard and from the maps where it was being used.</p>" %>
+<%- message = "<p style='margin-bottom: 0;'>Tu compañero/a #{@table_visualization_owner_name} ha dejado de compartir el dataset <strong>#{@table_visualization_name}</strong> contigo, por lo que desaparecerá de tu dashboard y de los mapas donde se estaba utilizando.</p>" %>
 
 <%= render partial: 'mailer_modules/warning_message', locals: { message: message } %>

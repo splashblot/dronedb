@@ -19,9 +19,9 @@ class GeocoderMailer < ActionMailer::Base
 
     def set_subject(state)
       if @geocoding_failed
-        subject = "Your dataset geocoding has failed"
+        subject = "Algo ha ido mal en la geocodificación de tu dataset"
       else
-        subject = "Your dataset geocoding has just finished"
+        subject = "La geocodificación de tu dataset ha finalizado"
       end
 
       subject
