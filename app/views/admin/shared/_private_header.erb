@@ -10,6 +10,9 @@
       <ul class='TL-HeaderMenu'>
         <li class='TL-HeaderMenu-item'><%= link_to "Fields", CartoDB.url(self, 'maps_index', {}, current_user) %></li>
         <li class='TL-HeaderMenu-item'><%= link_to "Datasets", CartoDB.url(self, 'datasets_index', {}, current_user) %></li>
+        <% if !@user.organization_owner? && @organization.owner.has_feature_flag?('agroguia-link') %>
+          <li class='TL-HeaderMenu-item'><%= link_to "Agroguía", CartoDB.url(self, 'maps_agroguia', {}, current_user) %></li>
+        <% end %>
       </ul>
     </div>
 
