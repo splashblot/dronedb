@@ -507,7 +507,7 @@ class Admin::VisualizationsController < Admin::AdminController
   end
 
   def resolve_visualization_and_table
-    filters = { exclude_raster: true }
+    filters = { exclude_raster: false }
     @visualization, @table =
       get_visualization_and_table(@table_id, username_from_schema || CartoDB.extract_subdomain(request), filters)
     if @visualization && @visualization.user
@@ -650,7 +650,6 @@ class Admin::VisualizationsController < Admin::AdminController
     end
 
     return get_visualization_and_table_from_table_id(table_id) if visualization.nil?
-    render_pretty_404 if visualization.kind == Carto::Visualization::KIND_RASTER
     return Carto::Admin::VisualizationPublicMapAdapter.new(visualization, current_user, self), visualization.table_service
   end
 
