@@ -8,8 +8,11 @@
 
     <div class='TL-Header-row2'>
       <ul class='TL-HeaderMenu'>
-        <li class='TL-HeaderMenu-item'><%= link_to "Fields", CartoDB.url(self, 'maps_index', {}, current_user) %></li>
+        <li class='TL-HeaderMenu-item'><%= link_to "Mapas", CartoDB.url(self, 'maps_index', {}, current_user) %></li>
         <li class='TL-HeaderMenu-item'><%= link_to "Datasets", CartoDB.url(self, 'datasets_index', {}, current_user) %></li>
+        <% if current_user.has_feature_flag?('agroguia-link') %>
+          <li class='TL-HeaderMenu-item'><%= link_to "Agroguía", CartoDB.url(self, 'maps_agroguia', {}, current_user) %></li>
+        <% end %>
       </ul>
     </div>
 
@@ -23,11 +26,14 @@
           <% end %>
         </div>
         <ul class='TL-HeaderDropdown-menu'>
-          <li class='TL-HeaderDropdown-menuItem'><%= link_to "Account settings", CartoDB.url(self, 'account_user', {}, current_user) %></li>
+          <li class='TL-HeaderDropdown-menuItem'><%= link_to "Configuración de cuenta", CartoDB.url(self, 'account_user', {}, current_user) %></li>
           <% if current_user.organization.present? && current_user.organization_owner? %>
-            <li class='TL-HeaderDropdown-menuItem'><%= link_to "Organization settings", CartoDB.url(self, 'organization_settings', {}, current_user) %></li>
+            <li class='TL-HeaderDropdown-menuItem'><%= link_to "Configuración de organización", CartoDB.url(self, 'organization_settings', {}, current_user) %></li>
           <% end %>
-          <li class='TL-HeaderDropdown-menuItem'><%= link_to "Logout", CartoDB.url(self, 'logout', {}, current_user) %></li>
+          <% if current_user.has_feature_flag?('agroguia-link') %>
+            <li class='TL-HeaderDropdown-menuItem'><%= link_to "Agroguía", CartoDB.url(self, 'maps_agroguia', {}, current_user) %></li>
+          <% end %>
+          <li class='TL-HeaderDropdown-menuItem'><%= link_to "Salir", CartoDB.url(self, 'logout', {}, current_user) %></li>
         </ul>
       </div>
     </div>
