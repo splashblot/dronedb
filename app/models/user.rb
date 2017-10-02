@@ -1255,7 +1255,7 @@ class User < Sequel::Model
   end
 
   def public_table_count
-    table_count(privacy: Carto::Visualization::PRIVACY_PUBLIC, exclude_raster: true)
+    table_count(privacy: Carto::Visualization::PRIVACY_PUBLIC, exclude_raster: false)
   end
 
   # Only returns owned tables (not shared ones)
