@@ -16,7 +16,7 @@ $text-color: rgba(white, 0.5);
 .Navbar--left { text-align: left }
 
 .Navbar-brand {
-  height: 48px;
+  height: 128px;
   max-width: 92px;
   margin: 0 auto;
   margin-bottom: 40px;
@@ -25,6 +25,7 @@ $text-color: rgba(white, 0.5);
 
   img {
     width: 128px;
+    height: 128px;
   }
 }
 
