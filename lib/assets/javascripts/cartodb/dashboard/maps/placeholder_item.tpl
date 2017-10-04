@@ -11,7 +11,7 @@
       <div class="MapCard-contentBodyRow MapCard-contentBodyRow--fake">
         <a href="<%- url %>" target="_blank">
           <button class="CDB-Button CDB-Button--secondary  js-open">
-            <span class="CDB-Button-Text CDB-Text is-semibold CDB-Size-small u-upperCase">Learn more</span>
+            <span class="CDB-Button-Text CDB-Text is-semibold CDB-Size-small u-upperCase">Saber más</span>
           </button>
         </a>
       </div>
