@@ -1,0 +1,9 @@
+<% if Cartodb.config[:translation].present? %>
+  <%= javascript_include_tag 'jquery-2.1.4.min.js', 'jquery.i18n.min.js', 'i18n-cdb-translate.js' %>
+  <%= javascript_include_tag 'languages/es.i18n.js' %>
+  <script type="text/javascript">
+    var language = "en";
+
+    alert('hello ' + language);
+  </script>
+<% end %>

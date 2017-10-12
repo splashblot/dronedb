@@ -127,6 +127,11 @@ module CartoDB
       dataset_vendor.js
       common.js
 
+      jquery-2.1.4.min.js
+      jquery.i18n.min.js
+      i18n-cdb-translate.js
+      languages/es.i18n.js
+
       deep_insights.css
       cdb.css
       cdb/themes/css/cartodb.css
