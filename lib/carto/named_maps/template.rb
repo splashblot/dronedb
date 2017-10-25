@@ -99,7 +99,7 @@ module Carto
             table_name = layer.options['table_name']
             if  table_name.include? "_raster"
                 options = {
-                    :sql =>"SELECT * FROM (SELECT * FROM " + table_name + ") AS wrapped_query WHERE <%= layer1 %>=1",
+                    :sql =>"SELECT * FROM " + table_name,
                     :cartocss =>  "#" + table_name + " {raster-opacity: 1}",
                     :cartocss_version => "2.3.0",
                     :geom_column => "the_raster_webmercator",
