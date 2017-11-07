@@ -1,4 +1,4 @@
-<% content_for :title do %><%= @user.username %> account enabled<% end %>
+<% content_for :title do %>Cuenta <%= @user.username %> activada<% end %>
 
 <div class="Sessions CDB-Text">
   <div class="Sessions-content">
@@ -12,8 +12,8 @@
           </div>
 
           <div class="js-info">
-            <h1 class="Sessions-title u-tspace-m">Your account is active!</h1>
-            <p class="Sessions-description">Go to <%= link_to "your dashboard", @destination_url %> and start enjoying your Tileo account.</p>
+            <h1 class="Sessions-title u-tspace-m">Tu cuenta se ha activado</h1>
+            <p class="Sessions-description">Ve a <%= link_to "tu dashboard", @destination_url %> y empieza a usar tu nueva cuenta en Tileo.</p>
           </div>
         </div>
       </div>

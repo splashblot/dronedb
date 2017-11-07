@@ -21,7 +21,7 @@ module Carto
         only_liked = params[:only_liked] == 'true'
         only_shared = params[:only_shared] == 'true'
         exclude_shared = params[:exclude_shared] == 'true'
-        exclude_raster = params[:exclude_raster] == 'true'
+        exclude_raster = false
         locked = params[:locked]
         shared = compose_shared(params[:shared], only_shared, exclude_shared)
         tags = params.fetch(:tags, '').split(',')
