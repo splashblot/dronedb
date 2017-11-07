@@ -62,6 +62,7 @@ module CartoDB
     config.paths['public'] = [public_uploads_path]
 
     config.assets.paths << Rails.root.join('bower_components')
+    config.assets.paths << Rails.root.join('app', 'assets', 'fonts')
 
     # Default setting is [/\w+\.(?!js|css).+/, /application.(css|js)$/]
     config.assets.precompile = %w(
