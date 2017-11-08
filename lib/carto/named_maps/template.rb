@@ -96,6 +96,16 @@ module Carto
             layer_index += 1
 
             options = options_for_carto_and_torque_layers(layer, layer_index, is_builder)
+            table_name = layer.options['table_name']
+            if  table_name.include? "_raster"
+                options = {
+                    :sql =>"SELECT * FROM " + table_name,
+                    :cartocss =>  "#" + table_name + " {raster-opacity: 1}",
+                    :cartocss_version => "2.3.0",
+                    :geom_column => "the_raster_webmercator",
+                    :geom_type => "raster"
+                }
+            end
             layers.push(id: layer.id, type: 'cartodb', options: options)
           elsif layer.base_layer?
             layer_options = layer.options
