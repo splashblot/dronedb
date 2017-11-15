@@ -11,12 +11,12 @@ module CartoDB
       DOWNSAMPLED_FILENAME          = '%s_downsampled.vrt'
       WEBMERCATOR_FILENAME          = '%s_webmercator.vrt'
       ALIGNED_WEBMERCATOR_FILENAME  = '%s_aligned_webmercator.vrt'
-      ALIGNED_WEBMERCATOR_TIF_FILENAME  = '%s_aligned_webmercator.vrt'
+      ALIGNED_WEBMERCATOR_TIF_FILENAME  = '%s_aligned_webmercator.tif'
       SQL_FILENAME                  = '%s%s.sql'
       OVERLAY_TABLENAME             = 'o_%s_%s'
       RASTER_COLUMN_NAME            = 'the_raster_webmercator'
       GDALWARP_COMMON_OPTIONS       = ['-wm', '200', '-multi'].freeze
-      GDALTRANSFORM_COMMON_OPTIONS  = ['-co', 'COMPRESS=LZW', '-co', 'BIGTIFF=YES', '-co', 'TILED=YES'].freeze
+      GDALTRANSLATE_COMMON_OPTIONS  = ['-co', 'COMPRESS=LZW', '-co', 'BIGTIFF=YES', '-co', 'TILED=YES'].freeze
       MAX_REDUCTED_SIZE             = 256
 
       def initialize(table_name, filepath, pg_options, db)
