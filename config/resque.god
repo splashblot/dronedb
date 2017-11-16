@@ -14,7 +14,7 @@ RESQUE_PROCESSORS.each do |resque_id, resque_queues, num_workers|
     God.watch do |w|
         w.dir      = "#{rails_root}"
         w.name     = "resque-#{resque_id}-#{num}"
-        w.group    = 'resque-#{resque_id}'
+        w.group    = "resque-#{resque_id}"
         w.interval = 30.seconds
         w.env      = {"QUEUES"=>resque_queues, "RAILS_ENV"=>rails_env, "BUNDLE_GEMFILE"=>"#{rails_root}/Gemfile"}
         w.start    = "bundle exec rake -f #{rails_root}/Rakefile environment resque:work"
