@@ -8,7 +8,7 @@ module CartoDB
       SCHEMA                        = 'cdb_importer'
       PROJECTION                    = 3857
       BLOCKSIZE                     = '128x128'
-      DOWNSAMPLED_FILENAME          = '%s_downsampled.vrt'
+      DOWNSAMPLED_FILENAME          = '%s_downsampled.tif'
       WEBMERCATOR_FILENAME          = '%s_webmercator.vrt'
       ALIGNED_WEBMERCATOR_FILENAME  = '%s_aligned_webmercator.vrt'
       ALIGNED_WEBMERCATOR_TIF_FILENAME  = '%s_aligned_webmercator.tif'
@@ -81,7 +81,7 @@ module CartoDB
                     :basepath, :additional_tables, :db, :base_table_fqtn, :downsampled_filepath
 
       def downsample_raster
-        gdal_translate_command = [gdal_translate_path, '-scale', '-ot', 'Byte', GDALTRANSLATE_COMMON_OPTIONS, '-of', 'vrt', filepath, downsampled_filepath].flatten
+        gdal_translate_command = [gdal_translate_path, '-scale', '-ot', 'Byte', GDALTRANSLATE_COMMON_OPTIONS, filepath, downsampled_filepath].flatten
 
         stdout, stderr, status  = Open3.capture3(*gdal_translate_command)
         output_message = "(#{status}) |#{stdout + stderr}| Command: #{gdal_translate_command}"
