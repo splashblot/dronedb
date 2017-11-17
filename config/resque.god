@@ -1,8 +1,8 @@
 rails_env   = ENV['RAILS_ENV']
 raise "Please specify RAILS_ENV." unless rails_env
 rails_root  = ENV['RAILS_ROOT'] || File.expand_path(File.join(File.dirname(__FILE__), '..'))
-num_workers_import = rails_env == 'production' ? 10 : 1
-num_workers_rest = rails_env == 'production' ? 10 : 1
+num_workers_import = rails_env == 'production' ? 10 : 2
+num_workers_rest = rails_env == 'production' ? 10 : 2
 
 RESQUE_PROCESSORS = [
   [1, "imports", num_workers_import],
