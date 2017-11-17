@@ -166,7 +166,8 @@ module CartoDB
       def run_raster2pgsql(overviews_list)
         command = raster2pgsql_command(overviews_list)
 
-        stdout, stderr, status  = Open3.capture3(*command)
+        # TODO: replace comand.join() by other thing as this is insecure to injections attacks
+        stdout, stderr, status  = Open3.capture3(command.join(" "))
         output_message = "(#{status}) |#{stdout + stderr}| Command: #{command}"
         self.command_output << "\n#{output_message}"
         self.exit_code = status.to_i
@@ -255,7 +256,8 @@ module CartoDB
         raster_import_command = [raster2pgsql_path, '-t', BLOCKSIZE, '-C', '-x', '-Y', '-I', '-f', RASTER_COLUMN_NAME,
                                  filepath, "#{SCHEMA}.#{table_name}", ">", raster2psql_original_filepath]
 
-        stdout, stderr, status  = Open3.capture3(*raster_import_command)
+        # TODO: replace comand.join() by other thing as this is insecure to injections attacks
+        stdout, stderr, status  = Open3.capture3(raster_import_command.join(" "))
         output_message = "(#{status}) |#{stdout + stderr}| Command: #{raster_import_command}"
         self.command_output << "\n#{output_message}"
         self.exit_code = status.to_i
