@@ -9,20 +9,28 @@ module CartoDB
       PROJECTION                    = 3857
       BLOCKSIZE                     = '128x128'
       DOWNSAMPLED_FILENAME          = '%s_downsampled.tif'
-      WEBMERCATOR_FILENAME          = '%s_webmercator.tif'
-      ALIGNED_WEBMERCATOR_FILENAME  = '%s_aligned_webmercator.tif'
+      WEBMERCATOR_FILENAME          = '%s_webmercator.vrt'
+      ALIGNED_WEBMERCATOR_FILENAME  = '%s_aligned_webmercator.vrt'
+      ALIGNED_WEBMERCATOR_TIF_FILENAME  = '%s_aligned_webmercator.tif'
+      RASTER2PSQL_FILENAME          = '%s.sql'
+      RASTER2PSQL_ORIGINAL_FILENAME = '%s_original.sql'
       SQL_FILENAME                  = '%s%s.sql'
       OVERLAY_TABLENAME             = 'o_%s_%s'
       RASTER_COLUMN_NAME            = 'the_raster_webmercator'
-      GDALWARP_COMMON_OPTIONS       = ['-co', 'COMPRESS=LZW', '-co', 'BIGTIFF=IF_SAFER'].freeze
+      GDALWARP_COMMON_OPTIONS       = ['-wm', '200', '-multi'].freeze
+      GDALTRANSLATE_COMMON_OPTIONS  = ['-co', 'COMPRESS=LZW', '-co', 'BIGTIFF=YES', '-co', 'TILED=YES'].freeze
       MAX_REDUCTED_SIZE             = 256
 
       def initialize(table_name, filepath, pg_options, db)
         self.filepath             = filepath
         self.basepath             = filepath.slice(0, filepath.rindex('/')+1)
-        self.webmercator_filepath = WEBMERCATOR_FILENAME % [ filepath.gsub(/\.tif$/, '') ]
-        self.aligned_filepath     = ALIGNED_WEBMERCATOR_FILENAME % [ filepath.gsub(/\.tif$/, '') ]
-        self.downsampled_filepath = DOWNSAMPLED_FILENAME % [ filepath.gsub(/\.tif$/, '') ]
+        file_basename             = filepath.gsub(/\.tif$/, '') 
+        self.webmercator_filepath = WEBMERCATOR_FILENAME % [file_basename]
+        self.aligned_filepath     = ALIGNED_WEBMERCATOR_FILENAME % [file_basename]
+        self.aligned_tif_filepath = ALIGNED_WEBMERCATOR_TIF_FILENAME % [file_basename]
+        self.downsampled_filepath = DOWNSAMPLED_FILENAME % [file_basename]
+        self.raster2psql_filepath = RASTER2PSQL_FILENAME % [file_basename]
+        self.raster2psql_original_filepath = RASTER2PSQL_ORIGINAL_FILENAME % [file_basename]
         self.pg_options           = pg_options
         self.table_name           = table_name
         self.exit_code            = nil
@@ -49,6 +57,7 @@ module CartoDB
         scale = calculate_raster_scale(pixel_size)
 
         align_raster(scale)
+        convert_vrt_to_tif
 
         run_raster2pgsql(overviews_list)
 
@@ -73,11 +82,12 @@ module CartoDB
       private
 
       attr_writer   :exit_code, :command_output
-      attr_accessor :filepath, :pg_options, :table_name, :webmercator_filepath, :aligned_filepath, \
-                    :basepath, :additional_tables, :db, :base_table_fqtn, :downsampled_filepath
+      attr_accessor :filepath, :pg_options, :table_name, :webmercator_filepath, :aligned_filepath, :aligned_tif_filepath, \
+                    :basepath, :additional_tables, :db, :base_table_fqtn, :downsampled_filepath, :raster2psql_filepath, \
+                    :raster2psql_original_filepath
 
       def downsample_raster
-        gdal_translate_command = [gdal_translate_path, '-scale', '-ot', 'Byte', GDALWARP_COMMON_OPTIONS, filepath, downsampled_filepath].flatten
+        gdal_translate_command = [gdal_translate_path, '-scale', '-ot', 'Byte', GDALTRANSLATE_COMMON_OPTIONS, filepath, downsampled_filepath].flatten
 
         stdout, stderr, status  = Open3.capture3(*gdal_translate_command)
         output_message = "(#{status}) |#{stdout + stderr}| Command: #{gdal_translate_command}"
@@ -87,7 +97,7 @@ module CartoDB
       end
 
       def reproject_raster(file)
-        gdalwarp_command =[gdalwarp_path, GDALWARP_COMMON_OPTIONS, '-t_srs', "EPSG:#{PROJECTION}", file, webmercator_filepath].flatten
+        gdalwarp_command =[gdalwarp_path, GDALWARP_COMMON_OPTIONS, '-t_srs', "EPSG:#{PROJECTION}", '-of', 'vrt', file, webmercator_filepath].flatten
 
         stdout, stderr, status  = Open3.capture3(*gdalwarp_command)
         output_message = "(#{status}) |#{stdout + stderr}| Command: #{gdalwarp_command}"
@@ -97,10 +107,20 @@ module CartoDB
       end
 
       def align_raster(scale)
-        gdalwarp_command = [gdalwarp_path, GDALWARP_COMMON_OPTIONS, '-tr', scale.to_s, "-#{scale}", webmercator_filepath, aligned_filepath].flatten
+        gdalwarp_command = [gdalwarp_path, GDALWARP_COMMON_OPTIONS, '-tr', scale.to_s, "-#{scale}", '-of', 'vrt', webmercator_filepath, aligned_filepath].flatten
 
         stdout, stderr, status  = Open3.capture3(*gdalwarp_command)
         output_message = "(#{status}) |#{stdout + stderr}| Command: #{gdalwarp_command}"
+        self.command_output << "\n#{output_message}"
+        self.exit_code = status.to_i
+        raise TiffToSqlConversionError.new(output_message) if status.to_i != 0
+      end
+
+      def convert_vrt_to_tif
+        gdal_translate_command = [gdal_translate_path, GDALTRANSLATE_COMMON_OPTIONS, aligned_filepath, aligned_tif_filepath].flatten
+
+        stdout, stderr, status  = Open3.capture3(*gdal_translate_command)
+        output_message = "(#{status}) |#{stdout + stderr}| Command: #{gdal_translate_command}"
         self.command_output << "\n#{output_message}"
         self.exit_code = status.to_i
         raise TiffToSqlConversionError.new(output_message) if status.to_i != 0
@@ -144,24 +164,35 @@ module CartoDB
       end
 
       def run_raster2pgsql(overviews_list)
-        # We create a pipe and wait for it to complete the transaction in postgres
-        # In order to avoid a temporary sql, potentially pretty big
-        pipeline = [raster2pgsql_command(overviews_list), psql_base_command]
-        Open3.pipeline_r(*pipeline, err: :out) do |output_st, statuses|
-          status = statuses.last.value
-          output = output_st.read
-          output_message = "(#{status}) |#{output}| Command: #{pipeline}"
-          self.command_output << "\n#{output_message}"
-          self.exit_code = status.to_i
+        command = raster2pgsql_command(overviews_list)
 
-          if output =~ /canceling statement due to statement timeout/i
-            raise StatementTimeoutError.new(output_message, ERRORS_MAP[StatementTimeoutError])
-          end
+        # TODO: replace comand.join() by other thing as this is insecure to injections attacks
+        stdout, stderr, status  = Open3.capture3(command.join(" "))
+        output_message = "(#{status}) |#{stdout + stderr}| Command: #{command}"
+        self.command_output << "\n#{output_message}"
+        self.exit_code = status.to_i
+        raise TiffToSqlConversionError.new(output_message) if status.to_i != 0
 
-          raise UnknownSridError.new(output_message)          if output =~ /invalid srid/i
-          raise TiffToSqlConversionError.new(output_message)  if status.to_i != 0
-          raise TiffToSqlConversionError.new(output_message)  if output =~ /failure/i
+        return load_sql_with_psql(raster2psql_filepath)
+      end
+
+      def load_sql_with_psql(sql_file)
+        command = psql_base_command + ["-f", sql_file]
+        
+        stdout, stderr, status  = Open3.capture3(*command)
+        output_message = "(#{status}) |#{stdout + stderr}| Command: #{command}"
+        self.command_output << "\n#{output_message}"
+        self.exit_code = status.to_i
+
+        if output_message =~ /canceling statement due to statement timeout/i
+          raise StatementTimeoutError.new(output_message, ERRORS_MAP[StatementTimeoutError])
         end
+
+        raise UnknownSridError.new(output_message)          if output_message =~ /invalid srid/i
+        raise TiffToSqlConversionError.new(output_message)  if status.to_i != 0
+        raise TiffToSqlConversionError.new(output_message)  if output_message =~ /failure/i
+
+        return output_message               
       end
 
       def calculate_raster_scale(pixel_size)
@@ -199,7 +230,7 @@ module CartoDB
       def raster2pgsql_command(overviews_list)
         [
           raster2pgsql_path, '-s', PROJECTION.to_s, '-t', BLOCKSIZE, '-C', '-x', '-Y', '-I', '-f', RASTER_COLUMN_NAME,
-          '-l', overviews_list, aligned_filepath, "#{SCHEMA}.#{table_name}"
+          '-l', overviews_list, aligned_tif_filepath, "#{SCHEMA}.#{table_name}", ">", raster2psql_filepath
         ]
       end
 
@@ -223,24 +254,16 @@ module CartoDB
       def import_original_raster
         db.run %{DROP TABLE #{base_table_fqtn}}
         raster_import_command = [raster2pgsql_path, '-t', BLOCKSIZE, '-C', '-x', '-Y', '-I', '-f', RASTER_COLUMN_NAME,
-                                 filepath, "#{SCHEMA}.#{table_name}"]
-        # TODO refactor with run_raster2pgsql
-        pipeline = [raster_import_command, psql_base_command]
-        Open3.pipeline_r(*pipeline, err: :out) do |output_st, statuses|
-          status = statuses.last.value
-          output = output_st.read
-          output_message = "(#{status}) |#{output}| Command: #{pipeline}"
-          self.command_output << "\n#{output_message}"
-          self.exit_code = status.to_i
+                                 filepath, "#{SCHEMA}.#{table_name}", ">", raster2psql_original_filepath]
 
-          if output =~ /canceling statement due to statement timeout/i
-            raise StatementTimeoutError.new(output_message, ERRORS_MAP[StatementTimeoutError])
-          end
-
-          raise UnknownSridError.new(output_message)          if output =~ /invalid srid/i
-          raise TiffToSqlConversionError.new(output_message)  if status.to_i != 0
-          raise TiffToSqlConversionError.new(output_message)  if output =~ /failure/i
-        end
+        # TODO: replace comand.join() by other thing as this is insecure to injections attacks
+        stdout, stderr, status  = Open3.capture3(raster_import_command.join(" "))
+        output_message = "(#{status}) |#{stdout + stderr}| Command: #{raster_import_command}"
+        self.command_output << "\n#{output_message}"
+        self.exit_code = status.to_i
+        raise TiffToSqlConversionError.new(output_message) if status.to_i != 0
+                         
+        return load_sql_with_psql(raster2psql_original_filepath)
       end
 
       def psql_base_command
