@@ -20,6 +20,7 @@ module CartoDB
       GDALWARP_COMMON_OPTIONS       = ['-wm', '200', '-multi'].freeze
       GDALTRANSLATE_COMMON_OPTIONS  = ['-co', 'COMPRESS=LZW', '-co', 'BIGTIFF=YES', '-co', 'TILED=YES'].freeze
       MAX_REDUCTED_SIZE             = 256
+      DEFAULT_STATEMENT_TIMEOUT     = 10 * 60 * 1000 # ms
 
       def initialize(table_name, filepath, pg_options, db)
         self.filepath             = filepath
@@ -38,11 +39,14 @@ module CartoDB
         self.additional_tables    = []
         self.db                   = db
         self.base_table_fqtn      = SCHEMA + '.' + table_name
+        self.statement_timeout    = Cartodb.get_config(:importer, 'statement_timeout') || DEFAULT_STATEMENT_TIMEOUT
       end
 
       attr_reader   :exit_code, :command_output
 
       def run
+        set_connection_statement_timeout
+
         if need_downsample?
           downsample_raster
           reproject_raster(downsampled_filepath)
@@ -63,8 +67,11 @@ module CartoDB
 
         add_raster_base_overview_for_tiler
         import_original_raster
-
         self
+      end
+
+      def set_connection_statement_timeout
+        db.run %{ SET statement_timeout TO #{statement_timeout} }
       end
 
       def need_downsample?
@@ -84,7 +91,7 @@ module CartoDB
       attr_writer   :exit_code, :command_output
       attr_accessor :filepath, :pg_options, :table_name, :webmercator_filepath, :aligned_filepath, :aligned_tif_filepath, \
                     :basepath, :additional_tables, :db, :base_table_fqtn, :downsampled_filepath, :raster2psql_filepath, \
-                    :raster2psql_original_filepath
+                    :raster2psql_original_filepath, :statement_timeout
 
       def downsample_raster
         gdal_translate_command = [gdal_translate_path, '-scale', '-ot', 'Byte', GDALTRANSLATE_COMMON_OPTIONS, filepath, downsampled_filepath].flatten
@@ -134,8 +141,8 @@ module CartoDB
         matches[1].to_f
       end
 
-      def extract_raster_size
-        output_message = extract_raster_info(webmercator_filepath)
+      def extract_raster_size(filepath=webmercator_filepath)
+        output_message = extract_raster_info(filepath)
         matches = output_message.match(/size is (.*)?\n/i)
         raise TiffToSqlConversionError.new("Error obtaining raster size: #{output_message}") unless matches[1]
         matches[1].split(', ')
@@ -167,7 +174,7 @@ module CartoDB
         command = raster2pgsql_command(overviews_list)
 
         # TODO: replace comand.join() by other thing as this is insecure to injections attacks
-        stdout, stderr, status  = Open3.capture3(command.join(" "))
+        stdout, stderr, status  = Open3.capture3(command)
         output_message = "(#{status}) |#{stdout + stderr}| Command: #{command}"
         self.command_output << "\n#{output_message}"
         self.exit_code = status.to_i
@@ -228,10 +235,12 @@ module CartoDB
       end
 
       def raster2pgsql_command(overviews_list)
-        [
-          raster2pgsql_path, '-s', PROJECTION.to_s, '-t', BLOCKSIZE, '-C', '-x', '-Y', '-I', '-f', RASTER_COLUMN_NAME,
-          '-l', overviews_list, aligned_tif_filepath, "#{SCHEMA}.#{table_name}", ">", raster2psql_filepath
-        ]
+        # Escaping paths to avoid funny injection attacks with "rm -rf /" :-P
+        out_file = Shellwords.escape(raster2psql_filepath)
+        first_chapter   = %{printf 'SET statement_timeout TO #{statement_timeout};\n' > #{out_file}}
+        second_chapter  = %{#{raster2pgsql_path} -s  #{PROJECTION.to_s} -t #{BLOCKSIZE} -C -x -Y -I -f #{RASTER_COLUMN_NAME} \
+                          -l #{overviews_list} #{Shellwords.escape(aligned_tif_filepath)} #{Shellwords.escape(SCHEMA + "." + table_name)} >> #{out_file}}
+        return first_chapter + " && " + second_chapter
       end
 
       # We add an overview for the tiler with factor = 1,
@@ -253,11 +262,12 @@ module CartoDB
       # NOTE: the name of the column the_raster_webmercator is maintained for compatibility.
       def import_original_raster
         db.run %{DROP TABLE #{base_table_fqtn}}
-        raster_import_command = [raster2pgsql_path, '-t', BLOCKSIZE, '-C', '-x', '-Y', '-I', '-f', RASTER_COLUMN_NAME,
-                                 filepath, "#{SCHEMA}.#{table_name}", ">", raster2psql_original_filepath]
+        out_file = Shellwords.escape(raster2psql_original_filepath)
+        raster_import_command = %{ printf 'SET statement_timeout TO #{statement_timeout};\n' > #{out_file} && \
+                                #{raster2pgsql_path} -t #{BLOCKSIZE} -C -x -Y -I -f #{RASTER_COLUMN_NAME} \
+                                #{Shellwords.escape(filepath)} #{Shellwords.escape(SCHEMA + "." + table_name)} >> #{out_file}}
 
-        # TODO: replace comand.join() by other thing as this is insecure to injections attacks
-        stdout, stderr, status  = Open3.capture3(raster_import_command.join(" "))
+        stdout, stderr, status  = Open3.capture3(raster_import_command)
         output_message = "(#{status}) |#{stdout + stderr}| Command: #{raster_import_command}"
         self.command_output << "\n#{output_message}"
         self.exit_code = status.to_i
