@@ -33,11 +33,11 @@ describe 'raster2pgsql acceptance tests' do
 
 
   it 'tests extracting size from a tif' do
-    expected_size = [2052, 1780]
+    expected_size = [2430, 1215]
 
     rasterizer = Raster2Pgsql.new(@table_name, @filepath, {}, @user.db)
 
-    size = rasterizer.send(:extract_raster_size)
+    size = rasterizer.send(:extract_raster_size, @filepath)
     size.should eq expected_size
   end
 
@@ -91,7 +91,7 @@ describe 'raster2pgsql acceptance tests' do
                        log: CartoDB::Importer2::Doubles::Log.new(@user),
                        user: @user,
                        job: job
-                     })
+                     })                     
       CartoDB::Importer2::Raster2Pgsql.any_instance.stubs(:exit_code).returns(256)
       CartoDB::Importer2::Raster2Pgsql.any_instance.stubs(:command_output).returns('no space left on device')
 
