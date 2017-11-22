@@ -74,7 +74,7 @@ module ModelFactories
     end
 
     def self.legacy_tile_style(geometry_type)
-      "#layer #{Cartodb.config[:layer_opts]['default_tile_styles'][geometry_type]}"
+      "#layer #{Cartodb.config[:layer_opts]['default_tile_styles'][geometry_type]} #layer{raster-opacity: 1}"
     end
   end
 end
