@@ -45,8 +45,6 @@ module CartoDB
       attr_reader   :exit_code, :command_output
 
       def run
-        set_connection_statement_timeout
-
         if need_downsample?
           downsample_raster
           reproject_raster(downsampled_filepath)
@@ -70,8 +68,18 @@ module CartoDB
         self
       end
 
-      def set_connection_statement_timeout
-        db.run %{ SET statement_timeout TO #{statement_timeout} }
+      # Execute DB code inside a transaction with an optional statement timeout.
+      # This is the only way to have the SQL in the block executed with
+      # the desired statement_timeout when the connection goes trhough
+      # pgbouncer configured with pool mode as 'transaction'.      
+      def transaction_with_timeout
+        db.transaction do
+          begin
+            db.run("SET statement_timeout TO #{statement_timeout}") if statement_timeout
+            yield db
+            db.run('SET statement_timeout TO DEFAULT')
+          end
+        end
       end
 
       def need_downsample?
@@ -251,17 +259,26 @@ module CartoDB
       def add_raster_base_overview_for_tiler
         overview_name = OVERLAY_TABLENAME % [1, table_name]
         overview_fqtn = SCHEMA + '.' + overview_name
-        db.run %{CREATE TABLE #{overview_fqtn} AS SELECT * FROM #{base_table_fqtn}}
-        db.run %{CREATE INDEX ON "#{SCHEMA}"."#{overview_name}" USING gist (st_convexhull("#{RASTER_COLUMN_NAME}"))}
-        db.run %{SELECT AddRasterConstraints('#{SCHEMA}', '#{overview_name}','#{RASTER_COLUMN_NAME}',TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,FALSE)}
-        db.run %{SELECT AddOverviewConstraints('#{SCHEMA}', '#{overview_name}'::name, '#{RASTER_COLUMN_NAME}'::name, '#{SCHEMA}', '#{table_name}'::name, '#{RASTER_COLUMN_NAME}'::name, 1)}
+        queries = [
+          %{CREATE TABLE #{overview_fqtn} AS SELECT * FROM #{base_table_fqtn}},
+          %{CREATE INDEX ON "#{SCHEMA}"."#{overview_name}" USING gist (st_convexhull("#{RASTER_COLUMN_NAME}"))},
+          %{SELECT AddRasterConstraints('#{SCHEMA}', '#{overview_name}','#{RASTER_COLUMN_NAME}',TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,FALSE)},
+          %{SELECT AddOverviewConstraints('#{SCHEMA}', '#{overview_name}'::name, '#{RASTER_COLUMN_NAME}'::name, '#{SCHEMA}', '#{table_name}'::name, '#{RASTER_COLUMN_NAME}'::name, 1)}
+        ]
+        for query in queries do
+          transaction_with_timeout do |db|
+            db.run(query)
+          end
+        end
         @additional_tables = [1] + @additional_tables
       end
 
       # Import the original raster file without reprojections, adjusting or scales.
       # NOTE: the name of the column the_raster_webmercator is maintained for compatibility.
       def import_original_raster
-        db.run %{DROP TABLE #{base_table_fqtn}}
+        transaction_with_timeout do |db|
+          db.run %{DROP TABLE #{base_table_fqtn}}
+        end
         out_file = Shellwords.escape(raster2psql_original_filepath)
         raster_import_command = %{ printf 'SET statement_timeout TO #{statement_timeout};\n' > #{out_file} && \
                                 #{raster2pgsql_path} -t #{BLOCKSIZE} -C -x -Y -I -f #{RASTER_COLUMN_NAME} \
