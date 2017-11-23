@@ -3,8 +3,8 @@
 require_relative './point'
 require_relative './line'
 require_relative './polygon'
-require_relative './style'
 require_relative './raster'
+require_relative './style'
 require_relative '../definition'
 
 module Carto::Styles
@@ -21,7 +21,6 @@ module Carto::Styles
       "layer['mapnik::geometry_type'=1]" => Carto::Styles::Point,
       "layer['mapnik::geometry_type'=2]" => Carto::Styles::Line,
       "layer['mapnik::geometry_type'=3]" => Carto::Styles::Polygon,
-      "layer" => Carto::Styles::Raster,
     }.freeze
 
     def to_cartocss
@@ -31,8 +30,7 @@ module Carto::Styles
                                                 class_name: class_name)
                                            .to_s
       end
-
-      cartocss_classes.join("\n")
+      "#layer{raster-opacity: 1}\n" + cartocss_classes.join("\n")
     end
 
     def default_definition

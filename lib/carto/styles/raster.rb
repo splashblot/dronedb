@@ -17,10 +17,8 @@ module Carto::Styles
       Carto::Definition.instance.load_from_file(CARTOGRAPHY_DEFINITION_LOCATION)[:simple][:point]
     end
 
-    private
-
-    def parse_opacity(opacity)
-      ["raster-opacity: #{opacity};"]
+    def self.raster_opacity
+      ["raster-opacity: 1"]
     end
 
   end
