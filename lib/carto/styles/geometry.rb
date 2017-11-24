@@ -31,6 +31,7 @@ module Carto::Styles
                                            .to_s
       end
       "#layer{raster-opacity: 1}\n" + cartocss_classes.join("\n")
+
     end
 
     def default_definition
