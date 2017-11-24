@@ -390,7 +390,7 @@ module CartoDB
 
       def result_for(job, source_file, table_names, support_table_names=[], exception_klass=nil)
         job.logger.store
-	name = source_file.name
+	name = source_file.name[0...56]
 	name.slice! "_raster"
 	unless source_file.extension != '.tif'
 		name = name + '_raster'
