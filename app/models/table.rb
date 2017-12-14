@@ -1111,6 +1111,28 @@ class Table
         raise exception
       end
     end
+#hotfix for rasters
+        if @name_changed_from.include? "_raster"
+		name_changed_from = @name_changed_from.to_s
+                i = 1
+                #name.slice! "_raster"
+                #name = name + "_raster"
+                while i < 2
+                        puts 'RUNNING: `ALTER TABLE o_'+i.to_s+'_'+name_changed_from+' RENAME TO o_'+i.to_s+'_' +name
+                        owner.in_database.execute %{
+                                SELECT DropOverviewConstraints('public', 'o_#{i}_#{name_changed_from}', 'the_raster_webmercator');
+                        }
+                        owner.in_database.execute %{
+                                ALTER TABLE o_#{i}_#{name_changed_from} RENAME TO o_#{i}_#{name};
+                                
+                        }
+                        owner.in_database.execute %{
+                                SELECT AddOverviewConstraints('public','o_#{i}_#{name}','the_raster_webmercator','public','#{name}','the_raster_webmercator',#{i});
+                        }
+                        i +=1
+                end
+        end
+puts name_changed_from + ' renamed ' + name
     @name_changed_from = nil
   end
 
