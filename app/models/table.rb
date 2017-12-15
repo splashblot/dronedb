@@ -1071,17 +1071,31 @@ class Table
   def update_name_changes
     if @name_changed_from.present? && @name_changed_from != name
       reload
-
+      newname = name
       unless register_table_only
         begin
+          if ( (@name_changed_from.include? "_raster") && (!name.include? "_raster"))
+             puts newname
+             puts newname.to_s
+             puts newname[0...56]
+             puts newname[0...56].to_s
+             puts newname
+             puts newname.to_s
+             newname = newname[0...56]
+             puts newname
+             newname = newname + "_raster"
+             puts newname
+             newname = newname.to_s
+             puts newname
+          end
           #  Underscore prefixes have a special meaning in PostgreSQL, hence the ugly hack
-          Carto::OverviewsService.new(owner.in_database).rename_overviews @name_changed_from, name
-          if name.start_with?('_')
-            temp_name = "t" + "#{9.times.map { rand(9) }.join}" + name
+          Carto::OverviewsService.new(owner.in_database).rename_overviews @name_changed_from, newname
+          if newname.start_with?('_')
+            temp_name = "t" + "#{9.times.map { rand(9) }.join}" + newname
             owner.in_database.rename_table(@name_changed_from, temp_name)
-            owner.in_database.rename_table(temp_name, name)
+            owner.in_database.rename_table(temp_name, newname)
           else
-            owner.in_database.rename_table(@name_changed_from, name)
+            owner.in_database.rename_table(@name_changed_from, newname)
           end
         rescue StandardError => exception
           exception_to_raise = CartoDB::BaseCartoDBError.new(
@@ -1101,15 +1115,15 @@ class Table
         #name.slice! "_raster"
         #name = name + "_raster"
         while i < 2
-            puts 'RUNNING: `ALTER TABLE o_'+i.to_s+'_'+name_changed_from+' RENAME TO o_'+i.to_s+'_' +name
+            puts 'RUNNING: `ALTER TABLE o_'+i.to_s+'_'+name_changed_from+' RENAME TO o_'+i.to_s+'_' +newname
             owner.in_database.execute %{
                 SELECT DropOverviewConstraints('public', 'o_#{i}_#{name_changed_from}', 'the_raster_webmercator');
             }
             owner.in_database.execute %{
-                ALTER TABLE o_#{i}_#{name_changed_from} RENAME TO o_#{i}_#{name};                        
+                ALTER TABLE o_#{i}_#{name_changed_from} RENAME TO o_#{i}_#{newname}; 
             }
             owner.in_database.execute %{
-                SELECT AddOverviewConstraints('public','o_#{i}_#{name}','the_raster_webmercator','public','#{name}','the_raster_webmercator',#{i});
+                SELECT AddOverviewConstraints('public','o_#{i}_#{newname}','the_raster_webmercator','public','#{newname}','the_raster_webmercator',#{i});
             }
             i +=1
         end
