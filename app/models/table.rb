@@ -1099,14 +1099,15 @@ class Table
         i = 1
         while i < 2
             puts 'RUNNING: `ALTER TABLE o_'+i.to_s+'_'+name_changed_from+' RENAME TO o_'+i.to_s+'_' +name
+            schema_table = self.owner.database_schema
             owner.in_database.execute %{
-                SELECT DropOverviewConstraints('public', 'o_#{i}_#{name_changed_from}', 'the_raster_webmercator');
+                SELECT DropOverviewConstraints('#{schema_table}', 'o_#{i}_#{name_changed_from}', 'the_raster_webmercator');
             }
             owner.in_database.execute %{
                 ALTER TABLE o_#{i}_#{name_changed_from} RENAME TO o_#{i}_#{name}; 
             }
             owner.in_database.execute %{
-                SELECT AddOverviewConstraints('public','o_#{i}_#{name}','the_raster_webmercator','public','#{name}','the_raster_webmercator',#{i});
+                SELECT AddOverviewConstraints('#{schema_table}','o_#{i}_#{name}','the_raster_webmercator','#{schema_table}','#{name}','the_raster_webmercator',#{i});
             }
             i +=1
         end
