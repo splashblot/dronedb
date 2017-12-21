@@ -70,7 +70,7 @@ module Carto
     private_class_method :builder_tile_style
 
     def self.legacy_tile_style(geometry_type)
-      "#layer #{Cartodb.config[:layer_opts]['default_tile_styles'][geometry_type]}"
+      "#layer #{Cartodb.config[:layer_opts]['default_tile_styles'][geometry_type]} #layer{raster-opacity: 1}"
     end
     private_class_method :legacy_tile_style
   end
