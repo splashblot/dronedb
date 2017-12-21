@@ -1071,7 +1071,6 @@ class Table
   def update_name_changes
     if @name_changed_from.present? && @name_changed_from != name
       reload
-
       unless register_table_only
         begin
           #  Underscore prefixes have a special meaning in PostgreSQL, hence the ugly hack
@@ -1094,6 +1093,34 @@ class Table
       begin
         propagate_name_change_to_analyses
         propagate_namechange_to_table_vis
+    #hotfix for rasters
+    if @name_changed_from.include? "_raster"
+        name_changed_from = @name_changed_from.to_s
+        schema_table = self.owner.database_schema
+        sql = "SELECT count(table_name) FROM information_schema.tables WHERE table_schema='" + schema_table +"' "
+        sql = sql + " AND table_name LIKE 'o_%" + name_changed_from + "'"
+        records = User.where(username: "#{self.owner.username}").first().in_database[sql].all()
+        records = records.as_json[0]["count"]
+
+        i = 0
+        while i < records
+            exp = 2**i
+            puts 'RUNNING: `ALTER TABLE o_'+exp.to_s+'_'+name_changed_from+' RENAME TO o_'+exp.to_s+'_' +name
+            schema_table = self.owner.database_schema
+            owner.in_database.execute %{
+                SELECT DropOverviewConstraints('#{schema_table}', 'o_#{exp}_#{name_changed_from}', 'the_raster_webmercator');
+            }
+            owner.in_database.execute %{
+                ALTER TABLE o_#{exp}_#{name_changed_from} RENAME TO o_#{exp}_#{name}; 
+            }
+            owner.in_database.execute %{
+                SELECT AddOverviewConstraints('#{schema_table}','o_#{exp}_#{name}','the_raster_webmercator','#{schema_table}','#{name}','the_raster_webmercator',#{exp});
+            }
+            i +=1
+        end
+    end
+
+
         if @user_table.layers.blank?
           exception_to_raise = CartoDB::TableError.new("Attempt to rename table without layers #{qualified_table_name}")
           CartoDB::notify_exception(exception_to_raise, user: owner)
