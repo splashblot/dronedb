@@ -1096,18 +1096,25 @@ class Table
     #hotfix for rasters
     if @name_changed_from.include? "_raster"
         name_changed_from = @name_changed_from.to_s
-        i = 1
-        while i < 2
-            puts 'RUNNING: `ALTER TABLE o_'+i.to_s+'_'+name_changed_from+' RENAME TO o_'+i.to_s+'_' +name
+        schema_table = self.owner.database_schema
+        sql = "SELECT count(table_name) FROM information_schema.tables WHERE table_schema='" + schema_table +"' "
+        sql = sql + " AND table_name LIKE 'o_%" + name_changed_from + "'"
+        records = User.where(username: "#{self.owner.username}").first().in_database[sql].all()
+        records = records.as_json[0]["count"]
+
+        i = 0
+        while i < records
+            exp = 2**i
+            puts 'RUNNING: `ALTER TABLE o_'+exp.to_s+'_'+name_changed_from+' RENAME TO o_'+exp.to_s+'_' +name
             schema_table = self.owner.database_schema
             owner.in_database.execute %{
-                SELECT DropOverviewConstraints('#{schema_table}', 'o_#{i}_#{name_changed_from}', 'the_raster_webmercator');
+                SELECT DropOverviewConstraints('#{schema_table}', 'o_#{exp}_#{name_changed_from}', 'the_raster_webmercator');
             }
             owner.in_database.execute %{
-                ALTER TABLE o_#{i}_#{name_changed_from} RENAME TO o_#{i}_#{name}; 
+                ALTER TABLE o_#{exp}_#{name_changed_from} RENAME TO o_#{exp}_#{name}; 
             }
             owner.in_database.execute %{
-                SELECT AddOverviewConstraints('#{schema_table}','o_#{i}_#{name}','the_raster_webmercator','#{schema_table}','#{name}','the_raster_webmercator',#{i});
+                SELECT AddOverviewConstraints('#{schema_table}','o_#{exp}_#{name}','the_raster_webmercator','#{schema_table}','#{name}','the_raster_webmercator',#{exp});
             }
             i +=1
         end
