@@ -117,7 +117,9 @@ end
 group :development, :test do
   gem 'rspec-rails',           '2.12.0'
   gem 'rb-readline'
-  gem 'byebug'
+  gem 'ruby-debug-ide'
+  gem 'debase'
+  # gem 'byebug' # Disabled as in theory interfere with ruby-debug-ide. See https://bzzt.io/posts/running-the-rails-debugger-in-a-docker-container-using-rubymine
   gem 'rack'
   gem 'zeus'
 
