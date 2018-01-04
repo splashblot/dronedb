@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'rails',                   '3.2.22'
+#gem 'rails',                   '3.2.22'
 
 gem 'rake',                    '0.9.2.2'
 gem 'pg',                      '0.15.0'
@@ -117,9 +117,7 @@ end
 group :development, :test do
   gem 'rspec-rails',           '2.12.0'
   gem 'rb-readline'
-  gem 'ruby-debug-ide'
-  gem 'debase'
-  # gem 'byebug' # Disabled as in theory interfere with ruby-debug-ide. See https://bzzt.io/posts/running-the-rails-debugger-in-a-docker-container-using-rubymine
+  gem 'byebug'
   gem 'rack'
   gem 'zeus'
 
