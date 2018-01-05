@@ -11,8 +11,8 @@ CartoDB::Application.configure do
   # The production environment is meant for finished, "live" apps.
   # Code is not reloaded between requests
   config.cache_classes = false  
-  config.reload_classes_only_on_change = false # Always reload classes, not when file has changed. 
-  # Consider set config.file_watcher = ActiveSupport::FileUpdateChecker when running on docker
+  # config.reload_classes_only_on_change = false # Always reload classes, not when file has changed. 
+  config.file_watcher = ActiveSupport::FileUpdateChecker
   
   # Full error reports are disabled and caching is turned on
   config.consider_all_requests_local       = true
