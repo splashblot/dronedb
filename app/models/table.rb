@@ -503,7 +503,7 @@ class Table
       Carto::OverviewsService.new(user_database).delete_overviews qualified_table_name
         if qualified_table_name.include? "_raster"
             rasterDataset = qualified_table_name
-            rasterDataset.slice! "public."
+            rasterDataset.slice! owner.database_schema.to_s + "."
             sql =  "SELECT count(table_name) FROM information_schema.tables WHERE table_schema= '"+owner.database_schema+"' and table_name LIKE 'o_%"+rasterDataset+"'"
             records = User.where(username: "#{owner.username}").first().in_database[sql].all()
             records = records.as_json[0]["count"]
