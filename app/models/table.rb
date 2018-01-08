@@ -494,7 +494,6 @@ class Table
   end
 
   def remove_table_from_user_database
-    puts 'LOLAILO'
     owner.in_database(:as => :superuser) do |user_database|
       begin
         user_database.run("DROP SEQUENCE IF EXISTS cartodb_id_#{oid}_seq")
@@ -502,7 +501,6 @@ class Table
         CartoDB::StdoutLogger.info 'Table#after_destroy error', "maybe table #{qualified_table_name} doesn't exist: #{e.inspect}"
       end
       Carto::OverviewsService.new(user_database).delete_overviews qualified_table_name
-      puts 'LOLAILO 2 ' + qualified_table_name
         if qualified_table_name.include? "_raster"
             rasterDataset = qualified_table_name
             rasterDataset.slice! "public."
