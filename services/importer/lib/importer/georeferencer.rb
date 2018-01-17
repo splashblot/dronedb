@@ -1,4 +1,5 @@
 # encoding: utf-8
+require 'net/http'
 require_relative './column'
 require_relative './job'
 require_relative './query_batcher'
@@ -69,6 +70,29 @@ module CartoDB
       end
 
       def create_the_geom_from_geometry_column
+        uri = ""
+        if column_exists_in?(table_name, 'referencia_catastral')
+          rc = db[%Q{ SELECT * from #{schema}.#{table_name}}].first
+          rc = rc[:referencia_catastral]
+          uri = URI.parse("http://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx?service=wfs&version=2&request=getfeature&STOREDQUERIE_ID=GetParcel&refcat=" + rc.to_s + "&srsname=EPSG::25830")
+          response = Net::HTTP.get_response(uri).body
+          response = Hash.from_xml(response)
+          refcatgeom = response["FeatureCollection"]["member"]["CadastralParcel"]["geometry"]["MultiSurface"]["surfaceMember"]["Surface"]["patches"]["PolygonPatch"]["exterior"]["LinearRing"]["posList"]
+	  s = refcatgeom
+	  space = 0
+	  cleanrefcatgeom = ''
+	  for pos in 0...s.length
+	    if (s[pos] == " ")
+	      space += 1
+	      if (space % 2 == 0)
+	        s[pos] = ","
+	      end
+	    end
+	    cleanrefcatgeom = cleanrefcatgeom + s[pos]
+	  end
+          transformedgeom = db[%Q{ SELECT ST_AsText(ST_Transform(ST_GeomFromText(\'POLYGON((#{cleanrefcatgeom}))\',25830),4326)) As wgs_geom }].first
+          db[%Q{ update #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{transformedgeom[:wgs_geom]}\',4326) }].first
+        end
         column = nil
         geometry_column_name = geometry_column_in
         return false unless geometry_column_name
