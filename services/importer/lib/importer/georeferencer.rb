@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'net/http'
+require 'open-uri'
 require_relative './column'
 require_relative './job'
 require_relative './query_batcher'
@@ -71,33 +72,31 @@ module CartoDB
       end
 
       def create_the_geom_from_referencia_catastral
-         uri = ""
-        if column_exists_in?(table_name, 'referencia_catastral')
+        if (column_exists_in?(table_name, 'provincia') && 
+            column_exists_in?(table_name, 'municipio') &&
+            column_exists_in?(table_name, 'poligono') &&
+            column_exists_in?(table_name, 'parcela'))
           create_the_geom_in table_name
-          rcs = db[%Q{ SELECT distinct(referencia_catastral) from #{schema}.#{table_name}}]
- 
+          catastral_data = db[%Q{ SELECT distinct provincia,municipio,poligono,parcela from #{schema}.#{table_name}}] 
+          catastral_data.each do |cd|
+            uri = URI.parse("http://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCallejero.asmx/Consulta_DNPPP?provincia=" +URI.escape(cd[:provincia].to_s)  + "&municipio=" + URI.escape(cd[:municipio].to_s) + "&poligono="+  URI.escape(cd[:poligono]) +"&parcela="+  URI.escape(cd[:parcela]) )
+            response = Net::HTTP.get_response(uri).body
+            response = Hash.from_xml(response)
+            comp_ref_cat = response["consulta_dnp"]["lrcdnp"]["rcdnp"][0]["rc"]["pc1"] + response["consulta_dnp"]["lrcdnp"]["rcdnp"][0]["rc"]["pc2"]
+            refcatgeom = construct_sigpac_polygon(comp_ref_cat)
+            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE provincia = \'#{cd[:provincia]}\' AND municipio = \'#{cd[:municipio]}\' AND poligono = \'#{cd[:poligono]}\' AND parcela = \'#{cd[:parcela]}\' }].first
+          end 
+        end
+        if column_exists_in?(table_name, 'referencia_catastral')
+          uri = ""
+          create_the_geom_in table_name
+          rcs = db[%Q{ SELECT distinct referencia_catastral from #{schema}.#{table_name}}]
           rcs.each do |eachrc| 
             rc = eachrc[:referencia_catastral]
             next if rc.nil? # empty referencia_catastral
-            uri = URI.parse("http://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx?service=wfs&version=2&request=getfeature&STOREDQUERIE_ID=GetParcel&refcat=" + rc.to_s + "&srsname=EPSG::25830")
-            response = Net::HTTP.get_response(uri).body
-            response = Hash.from_xml(response)
-            next if response["ExceptionReport"].present? # invalid referencia_catastral
-            refcatgeom = response["FeatureCollection"]["member"]["CadastralParcel"]["geometry"]["MultiSurface"]["surfaceMember"]["Surface"]["patches"]["PolygonPatch"]["exterior"]["LinearRing"]["posList"]
-            s = refcatgeom
-            space = 0
-            cleanrefcatgeom = ''
-            for pos in 0...s.length
-              if (s[pos] == " ")
-                space += 1
-                if (space % 2 == 0)
-                  s[pos] = ","
-                end
-              end
-              cleanrefcatgeom = cleanrefcatgeom + s[pos]
-            end
-            transformedgeom = db[%Q{ SELECT ST_AsText(ST_Transform(ST_GeomFromText(\'POLYGON((#{cleanrefcatgeom}))\',25830),4326)) As wgs_geom }].first
-            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{transformedgeom[:wgs_geom]}\',4326) WHERE referencia_catastral = \'#{rc}\' }].first
+
+            refcatgeom = construct_sigpac_polygon(rc)
+            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE referencia_catastral = \'#{rc}\' }].first
           end 
           'the_geom' 
 
@@ -110,6 +109,28 @@ module CartoDB
                                   user_id: @job.logger.user_id)
           job.log "WARNING: #{message}"
         false
+      end
+
+      def construct_sigpac_polygon rc
+        uri = URI.parse("http://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx?service=wfs&version=2&request=getfeature&STOREDQUERIE_ID=GetParcel&refcat=" + rc.to_s + "&srsname=EPSG::25830")
+        response = Net::HTTP.get_response(uri).body
+        response = Hash.from_xml(response)
+        return false if response["ExceptionReport"].present? # invalid referencia_catastral
+        refcatgeom = response["FeatureCollection"]["member"]["CadastralParcel"]["geometry"]["MultiSurface"]["surfaceMember"]["Surface"]["patches"]["PolygonPatch"]["exterior"]["LinearRing"]["posList"]
+        space = 0
+        s = refcatgeom
+        cleanrefcatgeom = ''
+        for pos in 0...s.length
+          if (s[pos] == " ")
+            space += 1
+            if (space % 2 == 0)
+              s[pos] = ","
+             end
+          end
+          cleanrefcatgeom = cleanrefcatgeom + s[pos]
+        end
+        transformedgeom = db[%Q{ SELECT ST_AsText(ST_Transform(ST_GeomFromText(\'POLYGON((#{cleanrefcatgeom}))\',25830),4326)) As wgs_geom }].first
+        transformedgeom[:wgs_geom]
       end
 
       def create_the_geom_from_geometry_column
