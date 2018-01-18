@@ -72,31 +72,40 @@ module CartoDB
       end
 
       def create_the_geom_from_referencia_catastral
-        if (column_exists_in?(table_name, 'provincia') && 
-            column_exists_in?(table_name, 'municipio') &&
-            column_exists_in?(table_name, 'poligono') &&
-            column_exists_in?(table_name, 'parcela'))
+        look_for_columns = ['provincia', 'municipio', 'poligono', 'parcela']
+        n_col = 0
+        column_for = transliterated_columns(table_name)
+        columns = {}
+        look_for_columns.each do |search_column|
+          n_col = n_col + 1 if column_for.keys.include? search_column
+        end
+        column_for_rc = column_for["referencia_catastral"] || column_for["referencia catastral"]
+        has_provincia_municipio = n_col == 4
+        has_rc = column_for_rc || false
+        if has_provincia_municipio || has_rc
           create_the_geom_in table_name
-          catastral_data = db[%Q{ SELECT distinct provincia,municipio,poligono,parcela from #{schema}.#{table_name}}] 
+        end
+        if has_provincia_municipio
+          catastral_data = db[%Q{ SELECT distinct "#{ column_for["provincia"] }" as provincia,"#{ column_for["municipio"] }" as municipio,"#{ column_for["poligono"] }" as poligono ,"#{ column_for["parcela"] }" as parcela from #{schema}.#{table_name}}] 
           catastral_data.each do |cd|
             uri = URI.parse("http://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCallejero.asmx/Consulta_DNPPP?provincia=" +URI.escape(cd[:provincia].to_s)  + "&municipio=" + URI.escape(cd[:municipio].to_s) + "&poligono="+  URI.escape(cd[:poligono]) +"&parcela="+  URI.escape(cd[:parcela]) )
             response = Net::HTTP.get_response(uri).body
-            response = Hash.from_xml(response)
-            comp_ref_cat = response["consulta_dnp"]["lrcdnp"]["rcdnp"][0]["rc"]["pc1"] + response["consulta_dnp"]["lrcdnp"]["rcdnp"][0]["rc"]["pc2"]
+            response = Nokogiri.XML(response)
+            comp_ref_cat = response.css("pc1").first.content + response.css("pc2").first.content
             refcatgeom = construct_sigpac_polygon(comp_ref_cat)
-            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE provincia = \'#{cd[:provincia]}\' AND municipio = \'#{cd[:municipio]}\' AND poligono = \'#{cd[:poligono]}\' AND parcela = \'#{cd[:parcela]}\' }].first
+            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{ column_for["provincia"] }" = \'#{cd[:provincia]}\' AND "#{ column_for["municipio"] }" = \'#{cd[:municipio]}\' AND "#{ column_for["poligono"] }" = \'#{cd[:poligono]}\' AND "#{ column_for["parcela"] }" = \'#{cd[:parcela]}\' }].first
           end 
         end
-        if column_exists_in?(table_name, 'referencia_catastral')
+        if has_rc
           uri = ""
           create_the_geom_in table_name
-          rcs = db[%Q{ SELECT distinct referencia_catastral from #{schema}.#{table_name}}]
+          rcs = db[%Q{ SELECT distinct "#{column_for_rc}" as referencia_catastral from #{schema}.#{table_name}}]
           rcs.each do |eachrc| 
             rc = eachrc[:referencia_catastral]
             next if rc.nil? # empty referencia_catastral
 
             refcatgeom = construct_sigpac_polygon(rc)
-            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE referencia_catastral = \'#{rc}\' }].first
+            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{column_for_rc}" = \'#{rc}\' }].first
           end 
           'the_geom' 
 
@@ -109,6 +118,14 @@ module CartoDB
                                   user_id: @job.logger.user_id)
           job.log "WARNING: #{message}"
         false
+      end
+
+     def normalize_column(column)
+        ActiveSupport::Inflector.transliterate(column).downcase.strip
+      end
+
+      def transliterated_columns(tablename)
+        Hash[columns_in(tablename).collect{|column| [normalize_column(column.to_s), column]}]
       end
 
       def construct_sigpac_polygon rc
