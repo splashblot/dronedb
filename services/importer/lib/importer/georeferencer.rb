@@ -74,31 +74,41 @@ module CartoDB
          uri = ""
         if column_exists_in?(table_name, 'referencia_catastral')
           create_the_geom_in table_name
-          rc = db[%Q{ SELECT * from #{schema}.#{table_name}}].first
-          rc = rc[:referencia_catastral]
-          uri = URI.parse("http://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx?service=wfs&version=2&request=getfeature&STOREDQUERIE_ID=GetParcel&refcat=" + rc.to_s + "&srsname=EPSG::25830")
-          response = Net::HTTP.get_response(uri).body
-          response = Hash.from_xml(response)
-          refcatgeom = response["FeatureCollection"]["member"]["CadastralParcel"]["geometry"]["MultiSurface"]["surfaceMember"]["Surface"]["patches"]["PolygonPatch"]["exterior"]["LinearRing"]["posList"]
-          s = refcatgeom
-          space = 0
-          cleanrefcatgeom = ''
-          for pos in 0...s.length
-            if (s[pos] == " ")
-              space += 1
-              if (space % 2 == 0)
-                s[pos] = ","
+          rcs = db[%Q{ SELECT distinct(referencia_catastral) from #{schema}.#{table_name}}]
+ 
+          rcs.each do |eachrc| 
+            rc = eachrc[:referencia_catastral]
+            next if rc.nil? # empty referencia_catastral
+            uri = URI.parse("http://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx?service=wfs&version=2&request=getfeature&STOREDQUERIE_ID=GetParcel&refcat=" + rc.to_s + "&srsname=EPSG::25830")
+            response = Net::HTTP.get_response(uri).body
+            response = Hash.from_xml(response)
+            next if response["ExceptionReport"].present? # invalid referencia_catastral
+            refcatgeom = response["FeatureCollection"]["member"]["CadastralParcel"]["geometry"]["MultiSurface"]["surfaceMember"]["Surface"]["patches"]["PolygonPatch"]["exterior"]["LinearRing"]["posList"]
+            s = refcatgeom
+            space = 0
+            cleanrefcatgeom = ''
+            for pos in 0...s.length
+              if (s[pos] == " ")
+                space += 1
+                if (space % 2 == 0)
+                  s[pos] = ","
+                end
               end
+              cleanrefcatgeom = cleanrefcatgeom + s[pos]
             end
-            cleanrefcatgeom = cleanrefcatgeom + s[pos]
-          end
-          transformedgeom = db[%Q{ SELECT ST_AsText(ST_Transform(ST_GeomFromText(\'POLYGON((#{cleanrefcatgeom}))\',25830),4326)) As wgs_geom }].first
-          db[%Q{ update #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{transformedgeom[:wgs_geom]}\',4326) }].first
-          
+            transformedgeom = db[%Q{ SELECT ST_AsText(ST_Transform(ST_GeomFromText(\'POLYGON((#{cleanrefcatgeom}))\',25830),4326)) As wgs_geom }].first
+            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{transformedgeom[:wgs_geom]}\',4326) WHERE referencia_catastral = \'#{rc}\' }].first
+          end 
           'the_geom' 
 
         end
-        
+        false
+      rescue => ex
+          message = "Importing Referencia Catastral failed: #{ex.message}"
+          CartoDB::Logger.warning(exception: ex,
+                                  message: message,
+                                  user_id: @job.logger.user_id)
+          job.log "WARNING: #{message}"
         false
       end
 
