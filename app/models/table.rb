@@ -1,4 +1,4 @@
-# coding: UTF-8
+	# coding: UTF-8
 # Proxies management of a table in the users database
 require 'forwardable'
 
@@ -501,6 +501,23 @@ class Table
         CartoDB::StdoutLogger.info 'Table#after_destroy error', "maybe table #{qualified_table_name} doesn't exist: #{e.inspect}"
       end
       Carto::OverviewsService.new(user_database).delete_overviews qualified_table_name
+        if qualified_table_name.include? "_raster"
+            rasterDataset = qualified_table_name
+            rasterDataset.slice! owner.database_schema.to_s + "."
+            sql =  "SELECT count(table_name) FROM information_schema.tables WHERE table_schema= '"+owner.database_schema+"' and table_name LIKE 'o_%"+rasterDataset+"'"
+            records = User.where(username: "#{owner.username}").first().in_database[sql].all()
+            records = records.as_json[0]["count"]
+
+            i = 0
+            while i < records
+                exp = 2**i
+                puts 'RUNNING: `DROP TABLE o_'+exp.to_s+'_'+rasterDataset
+                owner.in_database.execute %{
+                    DROP TABLE IF EXISTS #{owner.database_schema}.o_#{exp}_#{rasterDataset}
+                }
+                i +=1
+            end
+        end
       user_database.run(%{DROP TABLE IF EXISTS #{qualified_table_name}})
     end
   end
