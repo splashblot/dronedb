@@ -94,19 +94,25 @@ module CartoDB
             next if response.css("pc1").first.nil? # invalid address
             comp_ref_cat = response.css("pc1").first.content + response.css("pc2").first.content
             refcatgeom = construct_sigpac_polygon(comp_ref_cat)
-            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{ column_for["provincia"] }" = \'#{cd[:provincia]}\' AND "#{ column_for["municipio"] }" = \'#{cd[:municipio]}\' AND "#{ column_for["poligono"] }" = \'#{cd[:poligono]}\' AND "#{ column_for["parcela"] }" = \'#{cd[:parcela]}\' }].first
+            if refcatgeom
+              db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{ column_for["provincia"] }" = \'#{cd[:provincia]}\' AND "#{ column_for["municipio"] }" = \'#{cd[:municipio]}\' AND "#{ column_for["poligono"] }" = \'#{cd[:poligono]}\' AND "#{ column_for["parcela"] }" = \'#{cd[:parcela]}\' }].first
+            end
           end 
         end
         if has_rc
+          byebug
           uri = ""
           create_the_geom_in table_name
           rcs = db[%Q{ SELECT distinct "#{column_for_rc}" as referencia_catastral from #{schema}.#{table_name}}]
           rcs.each do |eachrc| 
             rc = eachrc[:referencia_catastral]
-            next if rc.nil? # empty referencia_catastral
+            next if rc.nil? || rc.strip.empty? # empty referencia_catastral
+            rc = rc.strip
 
             refcatgeom = construct_sigpac_polygon(rc)
-            db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{column_for_rc}" = \'#{rc}\' }].first
+            if refcatgeom
+              db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{column_for_rc}" = \'#{rc}\' }].first
+            end
           end 
           'the_geom' 
 
