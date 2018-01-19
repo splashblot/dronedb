@@ -91,6 +91,7 @@ module CartoDB
             uri = URI.parse("http://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCallejero.asmx/Consulta_DNPPP?provincia=" +URI.escape(cd[:provincia].to_s)  + "&municipio=" + URI.escape(cd[:municipio].to_s) + "&poligono="+  URI.escape(cd[:poligono]) +"&parcela="+  URI.escape(cd[:parcela]) )
             response = Net::HTTP.get_response(uri).body
             response = Nokogiri.XML(response)
+            next if response.css("pc1").first.nil? # invalid address
             comp_ref_cat = response.css("pc1").first.content + response.css("pc2").first.content
             refcatgeom = construct_sigpac_polygon(comp_ref_cat)
             db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{ column_for["provincia"] }" = \'#{cd[:provincia]}\' AND "#{ column_for["municipio"] }" = \'#{cd[:municipio]}\' AND "#{ column_for["poligono"] }" = \'#{cd[:poligono]}\' AND "#{ column_for["parcela"] }" = \'#{cd[:parcela]}\' }].first
