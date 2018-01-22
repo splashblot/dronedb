@@ -26,7 +26,7 @@
     "cartocolor": "4.0.0",
     "cartodb-deep-insights.js": "cartodb/deep-insights.js#master",
     "cartodb-pecan": "0.2.x",
-    "cartodb.js": "splashblot/cartodb.js#tileo/v4rastertype",
+    "cartodb.js": "splashblot/cartodb.js#846fc736a5005f849fa5e3f476b4397708d21f5d",
     "clipboard": "1.6.1",
     "codemirror": "5.14.2",
     "jquery": "2.1.4",
