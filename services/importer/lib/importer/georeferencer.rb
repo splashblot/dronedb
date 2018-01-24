@@ -11,12 +11,19 @@ require_relative '../../../dataservices-metrics/lib/geocoder_usage_metrics'
 
 module CartoDB
   module Importer2
+    class HTTPMaxTrials < StandardError  
+    end
+    class HTTPUnexpectedError < StandardError  
+    end 
+
     class Georeferencer
       DEFAULT_BATCH_SIZE = 50000
       GEOMETRY_POSSIBLE_NAMES   = %w{ geometry the_geom wkb_geometry geom geojson wkt }
       DEFAULT_SCHEMA            = 'cdb_importer'
       THE_GEOM_WEBMERCATOR      = 'the_geom_webmercator'
       DIRECT_STATEMENT_TIMEOUT  = 1.hour * 1000
+      MAX_RETRY = 4
+      SLEEP_TIME = 0.5
 
       def initialize(db, table_name, options, schema=DEFAULT_SCHEMA, job=nil, geometry_columns=nil, logger=nil)
         @db         = db
@@ -71,6 +78,42 @@ module CartoDB
         })
       end
 
+      def http_request(uri, trial=0, max_trials=MAX_RETRY, sleep_time=SLEEP_TIME)
+        sleep SLEEP_TIME if trial > 0
+        response = Net::HTTP.get_response(uri)	
+        if response.kind_of? Net::HTTPServerError
+          if (trial + 1) >= MAX_RETRY
+            raise HTTPMaxTrials, %Q{Max retrials #{trial+1} for uri '#{uri}' reached.}
+          end
+          return http_request(uri, trial + 1, max_trials, sleep_time)
+        end
+        if not response.kind_of? Net::HTTPSuccess
+          raise HTTPUnexpectedError, %Q{Unexpected response for uri #{uri}. Response code #{response.code}}
+        else         
+          return response
+        end
+      end
+
+      def construct_sigpac_polygon(rc)
+	uri = URI.parse("http://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx?service=wfs&version=2&request=getfeature&STOREDQUERIE_ID=GetParcel&refcat=" + rc.to_s + "&srsname=EPSG::25830")
+        response = http_request(uri)
+	xml = Nokogiri.XML(response.body)
+        s = xml.xpath("//gml:posList").text
+        cleanrefcatgeom = ''
+        space = 0
+        for pos in 0...s.length
+          if (s[pos] == " ")
+            space += 1
+            if (space % 2 == 0)
+              s[pos] = ","
+             end
+          end
+          cleanrefcatgeom = cleanrefcatgeom + s[pos]
+        end
+        transformedgeom = db[%Q{ SELECT ST_AsText(ST_Transform(ST_GeomFromText(\'POLYGON((#{cleanrefcatgeom}))\',25830),4326)) As wgs_geom }].first
+        transformedgeom[:wgs_geom]       
+      end
+
       def create_the_geom_from_referencia_catastral
         look_for_columns = ['provincia', 'municipio', 'poligono', 'parcela']
         n_col = 0
@@ -92,8 +135,8 @@ module CartoDB
           catastral_data.each do |cd|
             next if cd[:provincia].blank? || cd[:municipio].blank? || cd[:poligono].blank? || cd[:parcela].blank?
             uri = URI.parse("http://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCallejero.asmx/Consulta_DNPPP?provincia=" +URI.escape(cd[:provincia].to_s)  + "&municipio=" + URI.escape(cd[:municipio].to_s) + "&poligono="+  URI.escape(cd[:poligono].to_s) +"&parcela="+  URI.escape(cd[:parcela].to_s) )
-            response = Net::HTTP.get_response(uri).body
-            response = Nokogiri.XML(response)
+            response = http_request(uri)
+            response = Nokogiri.XML(response.body)
             next if response.css("pc1").first.nil? # invalid address
             comp_ref_cat = response.css("pc1").first.content + response.css("pc2").first.content
             refcatgeom = construct_sigpac_polygon(comp_ref_cat)
@@ -132,28 +175,6 @@ module CartoDB
 
       def transliterated_columns(tablename)
         Hash[columns_in(tablename).collect{|column| [normalize_column(column.to_s), column]}]
-      end
-
-      def construct_sigpac_polygon rc
-        uri = URI.parse("http://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx?service=wfs&version=2&request=getfeature&STOREDQUERIE_ID=GetParcel&refcat=" + rc.to_s + "&srsname=EPSG::25830")
-        response = Net::HTTP.get_response(uri).body
-        response = Hash.from_xml(response)
-        return false if response["ExceptionReport"].present? # invalid referencia_catastral
-        refcatgeom = response["FeatureCollection"]["member"]["CadastralParcel"]["geometry"]["MultiSurface"]["surfaceMember"]["Surface"]["patches"]["PolygonPatch"]["exterior"]["LinearRing"]["posList"]
-        space = 0
-        s = refcatgeom
-        cleanrefcatgeom = ''
-        for pos in 0...s.length
-          if (s[pos] == " ")
-            space += 1
-            if (space % 2 == 0)
-              s[pos] = ","
-             end
-          end
-          cleanrefcatgeom = cleanrefcatgeom + s[pos]
-        end
-        transformedgeom = db[%Q{ SELECT ST_AsText(ST_Transform(ST_GeomFromText(\'POLYGON((#{cleanrefcatgeom}))\',25830),4326)) As wgs_geom }].first
-        transformedgeom[:wgs_geom]
       end
 
       def create_the_geom_from_geometry_column
