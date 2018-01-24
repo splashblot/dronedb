@@ -83,12 +83,15 @@ module CartoDB
         has_provincia_municipio = n_col == 4
         has_rc = column_for_rc || false
         if has_provincia_municipio || has_rc
-          create_the_geom_in table_name
+          create_the_geom_in table_name          
+        else
+          return false
         end
         if has_provincia_municipio
-          catastral_data = db[%Q{ SELECT distinct "#{ column_for["provincia"] }" as provincia,"#{ column_for["municipio"] }" as municipio,"#{ column_for["poligono"] }" as poligono ,"#{ column_for["parcela"] }" as parcela from #{schema}.#{table_name}}] 
+          catastral_data = db[%Q{ SELECT distinct "#{ column_for["provincia"] }" as provincia,"#{ column_for["municipio"] }" as municipio,"#{ column_for["poligono"] }" as poligono ,"#{ column_for["parcela"] }" as parcela from #{schema}.#{table_name}}]           
           catastral_data.each do |cd|
-            uri = URI.parse("http://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCallejero.asmx/Consulta_DNPPP?provincia=" +URI.escape(cd[:provincia].to_s)  + "&municipio=" + URI.escape(cd[:municipio].to_s) + "&poligono="+  URI.escape(cd[:poligono]) +"&parcela="+  URI.escape(cd[:parcela]) )
+            next if cd[:provincia].blank? || cd[:municipio].blank? || cd[:poligono].blank? || cd[:parcela].blank?
+            uri = URI.parse("http://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCallejero.asmx/Consulta_DNPPP?provincia=" +URI.escape(cd[:provincia].to_s)  + "&municipio=" + URI.escape(cd[:municipio].to_s) + "&poligono="+  URI.escape(cd[:poligono].to_s) +"&parcela="+  URI.escape(cd[:parcela].to_s) )
             response = Net::HTTP.get_response(uri).body
             response = Nokogiri.XML(response)
             next if response.css("pc1").first.nil? # invalid address
@@ -100,34 +103,30 @@ module CartoDB
           end 
         end
         if has_rc
-          byebug
           uri = ""
-          create_the_geom_in table_name
           rcs = db[%Q{ SELECT distinct "#{column_for_rc}" as referencia_catastral from #{schema}.#{table_name}}]
           rcs.each do |eachrc| 
-            rc = eachrc[:referencia_catastral]
-            next if rc.nil? || rc.strip.empty? # empty referencia_catastral
+            rc = eachrc[:referencia_catastral].to_s
+            next if rc.blank? # empty referencia_catastral
             rc = rc.strip
 
             refcatgeom = construct_sigpac_polygon(rc)
             if refcatgeom
               db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{column_for_rc}" = \'#{rc}\' }].first
             end
-          end 
-          'the_geom' 
-
+          end           
         end
-        false
+        'the_geom'
       rescue => ex
-          message = "Importing Referencia Catastral failed: #{ex.message}"
-          CartoDB::Logger.warning(exception: ex,
-                                  message: message,
-                                  user_id: @job.logger.user_id)
-          job.log "WARNING: #{message}"
+        message = "Importing Referencia Catastral failed: #{ex.message}"
+        CartoDB::Logger.warning(exception: ex,
+                                message: message,
+                                user_id: @job.logger.user_id)
+        job.log "WARNING: #{message}"
         false
       end
 
-     def normalize_column(column)
+      def normalize_column(column)
         ActiveSupport::Inflector.transliterate(column).downcase.strip
       end
 
