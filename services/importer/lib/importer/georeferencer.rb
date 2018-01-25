@@ -96,7 +96,7 @@ module CartoDB
 
       def construct_sigpac_polygon(rc)
 	uri = URI.parse("http://ovc.catastro.meh.es/INSPIRE/wfsCP.aspx?service=wfs&version=2&request=getfeature&STOREDQUERIE_ID=GetParcel&refcat=" + rc.to_s + "&srsname=EPSG::25830")
-        response = http_request(uri)
+	response = http_request(uri)
 	xml = Nokogiri.XML(response.body)
         s = xml.xpath("//gml:posList").text
         cleanrefcatgeom = ''
