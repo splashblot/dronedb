@@ -133,15 +133,24 @@ module CartoDB
         if has_provincia_municipio
           catastral_data = db[%Q{ SELECT distinct "#{ column_for["provincia"] }" as provincia,"#{ column_for["municipio"] }" as municipio,"#{ column_for["poligono"] }" as poligono ,"#{ column_for["parcela"] }" as parcela from #{schema}.#{table_name}}]           
           catastral_data.each do |cd|
-            next if cd[:provincia].blank? || cd[:municipio].blank? || cd[:poligono].blank? || cd[:parcela].blank?
-            uri = URI.parse("http://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCallejero.asmx/Consulta_DNPPP?provincia=" +URI.escape(cd[:provincia].to_s)  + "&municipio=" + URI.escape(cd[:municipio].to_s) + "&poligono="+  URI.escape(cd[:poligono].to_s) +"&parcela="+  URI.escape(cd[:parcela].to_s) )
-            response = http_request(uri)
-            response = Nokogiri.XML(response.body)
-            next if response.css("pc1").first.nil? # invalid address
-            comp_ref_cat = response.css("pc1").first.content + response.css("pc2").first.content
-            refcatgeom = construct_sigpac_polygon(comp_ref_cat)
-            if refcatgeom
-              db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{ column_for["provincia"] }" = \'#{cd[:provincia]}\' AND "#{ column_for["municipio"] }" = \'#{cd[:municipio]}\' AND "#{ column_for["poligono"] }" = \'#{cd[:poligono]}\' AND "#{ column_for["parcela"] }" = \'#{cd[:parcela]}\' }].first
+            begin
+              next if cd[:provincia].blank? || cd[:municipio].blank? || cd[:poligono].blank? || cd[:parcela].blank?
+              uri = URI.parse("http://ovc.catastro.meh.es/ovcservweb/OVCSWLocalizacionRC/OVCCallejero.asmx/Consulta_DNPPP?provincia=" +URI.escape(cd[:provincia].to_s)  + "&municipio=" + URI.escape(cd[:municipio].to_s) + "&poligono="+  URI.escape(cd[:poligono].to_s) +"&parcela="+  URI.escape(cd[:parcela].to_s) )
+              response = http_request(uri)
+              response = Nokogiri.XML(response.body)
+              next if response.css("pc1").first.nil? # invalid address
+              comp_ref_cat = response.css("pc1").first.content + response.css("pc2").first.content
+              refcatgeom = construct_sigpac_polygon(comp_ref_cat)
+              if refcatgeom
+                db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{ column_for["provincia"] }" = \'#{cd[:provincia]}\' AND "#{ column_for["municipio"] }" = \'#{cd[:municipio]}\' AND "#{ column_for["poligono"] }" = \'#{cd[:poligono]}\' AND "#{ column_for["parcela"] }" = \'#{cd[:parcela]}\' }].first
+              end
+            rescue => ex
+              message = "Fail iterating over referencia catastral with municipio on #{cd.inspect} with #{ex.message}"
+              CartoDB::Logger.warning(exception: ex,
+                                      message: message,
+                                      user_id: @job.logger.user_id)
+              job.log "WARNING: #{message}"
+              next
             end
           end 
         end
@@ -149,13 +158,22 @@ module CartoDB
           uri = ""
           rcs = db[%Q{ SELECT distinct "#{column_for_rc}" as referencia_catastral from #{schema}.#{table_name}}]
           rcs.each do |eachrc| 
-            rc = eachrc[:referencia_catastral].to_s
-            next if rc.blank? # empty referencia_catastral
-            rc = rc.strip
+            begin
+              rc = eachrc[:referencia_catastral].to_s
+              next if rc.blank? # empty referencia_catastral
+              rc = rc.strip
 
-            refcatgeom = construct_sigpac_polygon(rc)
-            if refcatgeom
-              db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{column_for_rc}" = \'#{rc}\' }].first
+              refcatgeom = construct_sigpac_polygon(rc)
+              if refcatgeom
+                db[%Q{ UPDATE #{schema}.#{table_name} set the_geom = ST_GeomFromText(\'#{refcatgeom}\',4326) WHERE "#{column_for_rc}" = \'#{rc}\' }].first
+              end
+            rescue => ex
+              message = "Fail iterating over referencia catastral with rc on #{eachrc.inspect} with #{ex.message}"
+              CartoDB::Logger.warning(exception: ex,
+                                      message: message,
+                                      user_id: @job.logger.user_id)
+              job.log "WARNING: #{message}"
+              next
             end
           end           
         end
