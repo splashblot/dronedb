@@ -2,9 +2,9 @@ DRY_MODE = ARGV[0] == 'delete' ? false : true
 
 def remove_overviews(raster,user,schema)
   i = 0
-  while i < 65
+  while i < 7
     exp = 2**i
-    puts "the table #{scheme}.o_#{exp}_#{raster} from #{user}"
+    puts "the table #{schema}.o_#{exp}_#{raster} from #{user}"
     if !DRY_MODE
       User.where(username: "#{user}").first().in_database["DROP TABLE IF EXISTS #{schema}.o_#{exp}_#{raster} CASCADE"].first()
     end
@@ -23,7 +23,7 @@ def check_orphans(user,schema)
         remove_overviews(ov[:table_name],user,schema)
       end
     rescue
-      puts "iteration failed over: " + schema + "." + table + " from " +user
+      puts "iteration failed over: " + schema + "." + ov[:table_name] + " from " +user
     end
   end
 end
