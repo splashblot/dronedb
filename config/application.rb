@@ -69,21 +69,33 @@ module CartoDB
       config.js
       app.js
       cdb.js
+      carto_node.js
       embed.js
+      dashboard_templates.js
       dashboard_deps.js
       dashboard.js
-      dashboard_templates.js
-      public_dashboard_deps.js
-      public_dashboard.js
+      dashboard_templates_static.js
+      dashboard_deps_static.js
+      dashboard_static.js
       data_library_deps.js
       data_library.js
-      public_map.js
+      public_map_templates.js
       public_map_deps.js
+      public_map.js
+      public_map_templates_static.js
+      public_map_deps_static.js
+      public_map_static.js
+      show_templates_static.js
+      show_deps_static.js
+      show_static.js
+      embed_map_static.js
       editor.js
-
       account_templates.js
       account_deps.js
+      account_static.js
       account.js
+      profile.js
+      profile_templates.js
       keys_templates.js
       keys_deps.js
       keys.js
@@ -92,6 +104,7 @@ module CartoDB
       organization_deps.js
       organization.js
       table.js
+      public_dashboard_deps.js
       public_dashboard.js
       public_like.js
       tangram.min.js
@@ -106,9 +119,8 @@ module CartoDB
       confirmation.js
       new_public_table.js
 
-      mobile_apps.js
       mobile_apps_templates.js
-      mobile_apps_deps.js
+      mobile_apps.js
 
       explore_deps.js
       explore.js
@@ -154,6 +166,7 @@ module CartoDB
       password_protected.css
       public_dashboard.css
       public_map.css
+      embed_map.css
       data_library.css
       public_table.css
       sessions.css

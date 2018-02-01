@@ -20,6 +20,7 @@ class ApplicationController < ActionController::Base
   before_filter :browser_is_html5_compliant?
   before_filter :set_asset_debugging
   before_filter :cors_preflight_check
+  before_filter :check_user_state
   after_filter  :allow_cross_domain_access
   after_filter  :remove_flash_cookie
   after_filter  :add_revision_header
@@ -140,15 +141,36 @@ class ApplicationController < ActionController::Base
   def check_cors_headers_for_whitelisted_referer
     referer = request.env["HTTP_REFERER"]
     origin = request.headers['origin']
+
+    cors_enabled_hosts = Cartodb.get_config(:cors_enabled_hosts) || []
+    allowed_hosts = ([Cartodb.config[:account_host]] + cors_enabled_hosts).compact
+
     whitelist_referer = []
-    whitelist_referer << %w{http https}.map { |proto| "#{proto}://#{Cartodb.config[:account_host]}/explore" }
-    whitelist_referer << %w{http https}.map { |proto| "#{proto}://#{Cartodb.config[:account_host]}/data-library" }
-    whitelist_referer.flatten!
-    whitelist_origin = %w{http https}.map { |proto| "#{proto}://#{Cartodb.config[:account_host]}" }
+    whitelist_origin = []
+
+    allowed_hosts.each do |allowed_host|
+      %w{http https}.each do |protocol|
+        whitelist_referer << "#{protocol}://#{allowed_host}/explore"
+        whitelist_referer << "#{protocol}://#{allowed_host}/data-library"
+        whitelist_origin << "#{protocol}://#{allowed_host}"
+      end
+    end
+
     # It seems that Firefox and IExplore don't send the Referer header in the preflight request
     right_referer = request.method == "OPTIONS" ? true : whitelist_referer.include?(referer)
     right_origin = whitelist_origin.include?(origin)
     right_referer && right_origin
+  end
+
+  def check_user_state
+    return unless (request.path =~ %r{^\/(lockout|login|logout|unauthenticated)}).nil?
+    viewed_username = CartoDB.extract_subdomain(request)
+    if current_user.nil? || current_user.username != viewed_username
+      user = Carto::User.find_by_username(viewed_username)
+      render_locked_owner if user.try(:locked?)
+    elsif current_user.locked?
+      render_locked_user
+    end
   end
 
   def render_403
@@ -190,16 +212,38 @@ class ApplicationController < ActionController::Base
   end
 
   def api_authorization_required
-    authenticate!(:api_key, :api_authentication, :scope => CartoDB.extract_subdomain(request))
+    authenticate!(:api_key, :auth_api, :api_authentication, scope: CartoDB.extract_subdomain(request))
     validate_session(current_user)
   end
 
   # This only allows to authenticate if sending an API request to username.api_key subdomain,
-  # but doesn't breaks the request if can't authenticate
+  # but doesn't break the request if can't authenticate
   def optional_api_authorization
     if params[:api_key].present?
       got_auth = authenticate(:api_key, :api_authentication, :scope => CartoDB.extract_subdomain(request))
       validate_session(current_user) if got_auth
+    end
+  end
+
+  def render_locked_user
+    respond_to do |format|
+      format.html do
+        redirect_to CartoDB.path(self, 'lockout')
+      end
+      format.json do
+        head 404
+      end
+    end
+  end
+
+  def render_locked_owner
+    respond_to do |format|
+      format.html do
+        render_404
+      end
+      format.json do
+        head 404
+      end
     end
   end
 

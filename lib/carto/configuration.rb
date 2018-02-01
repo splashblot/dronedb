@@ -65,6 +65,15 @@ module Carto
       Cartodb.get_config(:geocoder, 'mapzen', 'search_bar_api_key')
     end
 
+    def mapbox_api_key
+      Cartodb.get_config(:geocoder, 'mapbox', 'search_bar_api_key')
+    end
+
+    # Make some methods available. Remember that this sets methods as private.
+    # More information: https://idiosyncratic-ruby.com/8-self-improvement.html
+    # This is the chosen approach to avoid including `Configuration` all over the place. Check #12757
+    module_function :saas?
+
     private
 
     def config_files_root
