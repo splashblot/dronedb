@@ -266,7 +266,7 @@ module.exports = function (grunt) {
     'copy:app',
     'copy:css_cartodb',
     'compass',
-    'copy:css_vendor_cartodb3',
+    'copy:css_tileo',
     'copy:css_cartodb3',
     'sass',
     'concat:css'
