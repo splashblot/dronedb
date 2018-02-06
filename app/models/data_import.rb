@@ -479,7 +479,6 @@ class DataImport < Sequel::Model
 
   def from_table
     log.append 'from_table()'
-
     number_of_tables = 1
     quota_checker = CartoDB::QuotaChecker.new(current_user)
     if quota_checker.will_be_over_table_quota?(number_of_tables)
@@ -507,7 +506,6 @@ class DataImport < Sequel::Model
 
   def import_from_query(name, query)
     log.append 'import_from_query()'
-
     self.data_type    = TYPE_QUERY
     self.data_source  = query
     save
@@ -529,6 +527,19 @@ class DataImport < Sequel::Model
         statement_timeout: DIRECT_STATEMENT_TIMEOUT
       ) do |user_direct_conn|
         user_direct_conn.run(%{CREATE TABLE #{table_name} AS #{query}})
+      end
+    end
+    if name.include?('_raster') && name.include?('_copy')
+      # Retrieve layer overviews
+      overviews = current_user.in_database["SELECT table_name FROM information_schema.tables WHERE  table_name LIKE 'o\_%#{name.chomp('_copy')}'"].all()
+      overviews.each do |ov|
+        new_overview_name = ov[:table_name] + '_copy'
+        schema_table = user[:database_schema]
+        exp          = new_overview_name[/o_(.*?)_/m,1]
+        current_user.in_database.run(%{ CREATE TABLE "#{schema_table}"."#{new_overview_name}" AS SELECT * FROM "#{schema_table}"."#{ov[:table_name]}" })
+        current_user.in_database.run(%{ CREATE INDEX ON "#{schema_table}"."#{new_overview_name}" USING gist (st_convexhull("the_raster_webmercator")) })
+        current_user.in_database.run(%{ SELECT AddRasterConstraints('#{schema_table}', '#{new_overview_name}','the_raster_webmercator',TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,FALSE) })
+        current_user.in_database.run(%{ SELECT AddOverviewConstraints('#{schema_table}','#{new_overview_name}','the_raster_webmercator','#{schema_table}','#{ov[:table_name]}','the_raster_webmercator',#{exp}) })
       end
     end
     if current_user.over_disk_quota?
