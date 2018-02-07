@@ -529,7 +529,7 @@ class DataImport < Sequel::Model
         user_direct_conn.run(%{CREATE TABLE #{table_name} AS #{query}})
       end
     end
-    if name.include?('_raster') && name.include?('_copy')
+    if name.include? '_raster'
       # Retrieve layer overviews
       overviews = current_user.in_database["SELECT table_name FROM information_schema.tables WHERE  table_name LIKE 'o\_%#{name.chomp('_copy')}'"].all()
       overviews.each do |ov|
@@ -539,7 +539,7 @@ class DataImport < Sequel::Model
         current_user.in_database.run(%{ CREATE TABLE "#{schema_table}"."#{new_overview_name}" AS SELECT * FROM "#{schema_table}"."#{ov[:table_name]}" })
         current_user.in_database.run(%{ CREATE INDEX ON "#{schema_table}"."#{new_overview_name}" USING gist (st_convexhull("the_raster_webmercator")) })
         current_user.in_database.run(%{ SELECT AddRasterConstraints('#{schema_table}', '#{new_overview_name}','the_raster_webmercator',TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,FALSE) })
-        current_user.in_database.run(%{ SELECT AddOverviewConstraints('#{schema_table}','#{new_overview_name}','the_raster_webmercator','#{schema_table}','#{ov[:table_name]}','the_raster_webmercator',#{exp}) })
+        current_user.in_database.run(%{ SELECT AddOverviewConstraints('#{schema_table}','#{new_overview_name}','the_raster_webmercator','#{schema_table}','#{name.chomp('_copy')}','the_raster_webmercator',#{exp}) })
       end
     end
     if current_user.over_disk_quota?
