@@ -532,11 +532,12 @@ class DataImport < Sequel::Model
 
     if (name.include?'_raster') && table_copy.present? 
       # Retrieve layer overviews
-      overviews = current_user.in_database["SELECT table_name FROM information_schema.tables WHERE  table_name LIKE 'o\_%#{table_copy}'"].all()
+      # Retrieve layer overviews
+      schema_table      = user[:database_schema]
+      overviews = current_user.in_database["SELECT table_name FROM information_schema.tables WHERE table_schema= '#{schema_table}' AND  table_name LIKE 'o\_%#{table_copy}'"].all()
       overviews.each do |ov|
         exp               = ov[:table_name][/o_(.*?)_/m,1]
         new_overview_name = "o_#{exp}_#{name}"
-        schema_table      = user[:database_schema]
         current_user.in_database.run(%{ CREATE TABLE "#{schema_table}"."#{new_overview_name}" AS SELECT * FROM "#{schema_table}"."#{ov[:table_name]}" })
         current_user.in_database.run(%{ CREATE INDEX ON "#{schema_table}"."#{new_overview_name}" USING gist (st_convexhull("the_raster_webmercator")) })
         current_user.in_database.run(%{ SELECT AddRasterConstraints('#{schema_table}', '#{new_overview_name}','the_raster_webmercator',TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,FALSE) })
