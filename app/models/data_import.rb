@@ -532,7 +532,6 @@ class DataImport < Sequel::Model
 
     if (name.include?'_raster') && table_copy.present? 
       # Retrieve layer overviews
-      # Retrieve layer overviews
       schema_table      = user[:database_schema]
       overviews = current_user.in_database["SELECT table_name FROM information_schema.tables WHERE table_schema= '#{schema_table}' AND  table_name LIKE 'o\_%#{table_copy}'"].all()
       overviews.each do |ov|
