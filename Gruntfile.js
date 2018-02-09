@@ -33,11 +33,24 @@ function requireWebpackTask () {
 
 function logVersionsError (err, requiredNodeVersion, requiredNpmVersion) {
   if (err) {
-    grunt.log.fail("############### /!\\ CAUTION /!\\ #################");
-    grunt.log.fail("PLEASE installed required versions to build CARTO:\n- node: " + requiredNodeVersion + "\n- node: " + requiredNpmVersion);
-    grunt.log.fail("#################################################");
+    grunt.log.fail('############### /!\\ CAUTION /!\\ #################');
+    grunt.log.fail('PLEASE installed required versions to build CARTO:\n- node: ' + requiredNodeVersion + '\n- node: ' + requiredNpmVersion);
+    grunt.log.fail('#################################################');
     process.exit(1);
   }
+}
+
+function getTargetDiff () {
+  var target = require('child_process').execSync('(git diff --name-only --relative || true;' +
+                                                 'git diff origin/master.. --name-only --relative || true;)' +
+                                                 '| grep \'\\.js\\?$\' || true').toString();
+  if (target.length === 0) {
+    target = ['.'];
+  } else {
+    target = target.split('\n');
+    target.splice(-1, 1);
+  }
+  return target;
 }
 
 /**
@@ -56,23 +69,23 @@ module.exports = function (grunt) {
     grunt.log.writeln('Running tasks: ' + runningTasks);
   }
 
-  function preFlight(requiredNodeVersion, requiredNpmVersion, logFn) {
-    function checkVersion(cmd, versionRange, name, logFn) {
+  function preFlight (requiredNodeVersion, requiredNpmVersion, logFn) {
+    function checkVersion (cmd, versionRange, name, logFn) {
       grunt.log.writeln('Required ' + name + ' version: ' + versionRange);
-      require("child_process").exec(cmd, function (error, stdout, stderr) {
+      require('child_process').exec(cmd, function (error, stdout, stderr) {
         var err = null;
         if (error) {
           err = 'failed to check version for ' + name;
         } else {
           var installed = semver.clean(stdout);
           if (!semver.satisfies(installed, versionRange)) {
-            err = 'Installed ' + name + ' version does not match with required [' + versionRange + "] Installed: " +  installed;
+            err = 'Installed ' + name + ' version does not match with required [' + versionRange + '] Installed: ' + installed;
           }
         }
         if (err) {
           grunt.log.fail(err);
         }
-        logFn && logFn(err ? new Error(err): null);
+        logFn && logFn(err ? new Error(err) : null);
       });
     }
     checkVersion('node -v', requiredNodeVersion, 'node', logFn);
@@ -87,10 +100,10 @@ module.exports = function (grunt) {
 
   var duplicatedModules = shrinkwrapDependencies.checkDuplicatedDependencies(require('./npm-shrinkwrap.json'), SHRINKWRAP_MODULES_TO_VALIDATE);
   if (duplicatedModules.length > 0) {
-    grunt.log.fail("############### /!\\ CAUTION /!\\ #################");
-    grunt.log.fail("Duplicated dependencies found in npm-shrinkwrap.json file.");
+    grunt.log.fail('############### /!\\ CAUTION /!\\ #################');
+    grunt.log.fail('Duplicated dependencies found in npm-shrinkwrap.json file.');
     grunt.log.fail(JSON.stringify(duplicatedModules, null, 4));
-    grunt.log.fail("#################################################");
+    grunt.log.fail('#################################################');
     process.exit(1);
   }
 
@@ -104,15 +117,17 @@ module.exports = function (grunt) {
   grunt.log.writeln('env: ' + env);
 
   if (grunt.file.exists(env)) {
-    env = grunt.file.readJSON(env)
+    env = grunt.file.readJSON(env);
   } else {
-    throw grunt.util.error(env +' file is missing! See '+ env +'.sample for how it should look like');
+    throw grunt.util.error(env + ' file is missing! See ' + env + '.sample for how it should look like');
   }
 
   var aws = {};
   if (grunt.file.exists('./lib/build/grunt-aws.json')) {
     aws = grunt.file.readJSON('./lib/build/grunt-aws.json');
   }
+
+  var targetDiff = getTargetDiff();
 
   // Project configuration.
   grunt.initConfig({
@@ -155,7 +170,11 @@ module.exports = function (grunt) {
 
     availabletasks: require('./lib/build/tasks/availabletasks.js').task(),
 
-    sass: require('./lib/build/tasks/sass.js').task()
+    sass: require('./lib/build/tasks/sass.js').task(),
+
+    eslint: {
+      target: targetDiff
+    }
   });
 
   /**
@@ -170,7 +189,7 @@ module.exports = function (grunt) {
 
   require('./lib/build/tasks/manifest').register(grunt, ASSETS_DIR);
 
-  grunt.registerTask('invalidate', 'invalidate cache', function() {
+  grunt.registerTask('invalidate', 'invalidate cache', function () {
     var done = this.async();
     var url = require('url');
     var https = require('https');
@@ -183,76 +202,60 @@ module.exports = function (grunt) {
     };
     console.log(options);
 
-    https.request(options, function(response) {
-      if(response.statusCode == 200) {
+    https.request(options, function (response) {
+      if (response.statusCode === 200) {
         grunt.log.ok('CDN invalidated (fastly)');
       } else {
-        grunt.log.error('CDN not invalidated (fastly), code: ' + response.statusCode)
+        grunt.log.error('CDN not invalidated (fastly), code: ' + response.statusCode);
       }
       done();
-    }).on('error', function(e) {
+    }).on('error', function () {
       grunt.log.error('CDN not invalidated (fastly)');
       done();
     }).end();
   });
 
-  grunt.registerTask('config', 'generates assets config for current configuration', function() {
+  grunt.registerTask('config', 'generates assets config for current configuration', function () {
     // Set assets url for static assets in our app
-    var config = grunt.template.process("cdb.config.set('assets_url', '<%= env.http_path_prefix %>/assets/<%= pkg.version %>');");
-    config += grunt.template.process("\nconsole.log('cartodbui v<%= pkg.version %>');");
-    grunt.file.write("lib/build/app_config.js", config);
+    var config = grunt.template.process('cdb.config.set(\'assets_url\', \'<%= env.http_path_prefix %>/assets/<%= pkg.version %>\');');
+    config += grunt.template.process('\nconsole.log(\'cartodbui v<%= pkg.version %>\');');
+    grunt.file.write('lib/build/app_config.js', config);
   });
 
-  grunt.registerTask('check_release', 'checks release can be done', function() {
+  grunt.registerTask('check_release', 'checks release can be done', function () {
     if (environment === DEVELOPMENT) {
-      grunt.log.error("you can't release running development environment");
+      grunt.log.error('you can\'t release running development environment');
       return false;
     }
 
-    grunt.log.ok("************************************************");
-    grunt.log.ok(" you are going to deploy to " + env );
-    grunt.log.ok("************************************************");
+    grunt.log.ok('************************************************');
+    grunt.log.ok(' you are going to deploy to ' + env);
+    grunt.log.ok('************************************************');
   });
 
-  grunt.event.on('watch', function(action, filepath, subtask) {
+  grunt.event.on('watch', function (action, filepath, subtask) {
     // Configure copy vendor to only run on changed file
-    var cfg = grunt.config.get('copy.vendor');
-    if (filepath.indexOf(cfg.cwd) !== -1) {
-      grunt.config('copy.vendor.src', filepath.replace(cfg.cwd, ''));
+    var vendorFile = 'copy.vendor';
+    var vendorFileCfg = grunt.config.get(vendorFile);
+
+    if (filepath.indexOf(vendorFileCfg.cwd) !== -1) {
+      grunt.config(vendorFile + '.src', filepath.replace(vendorFileCfg.cwd, ''));
     } else {
-      grunt.config('copy.vendor.src', []);
+      grunt.config(vendorFile + 'src', []);
     }
 
-    var builderFiles = [
-      'js_cartodb3',
-      'js_test_cartodb3'
-    ];
-    var otherFiles = [
-      'app',
-      'js_cartodb'
-    ];
+    // Configure copy app to only run on changed files
+    var files = 'copy.app.files';
+    var filesCfg = grunt.config.get(files);
 
-    var COPY_PATHS = [];
-    if (subtask === 'js_affected') {
-      COPY_PATHS = COPY_PATHS.concat(builderFiles);
-    } else {
-      COPY_PATHS = COPY_PATHS.concat(otherFiles).concat(builderFiles);
-    }
+    for (var i = 0, l = filesCfg.length; i < l; ++i) {
+      var file = files + '.' + i;
+      var fileCfg = grunt.config.get(file);
 
-    // Configure copy paths to only run on changed files
-    for (var j = 0, m = COPY_PATHS.length; j < m; ++j) {
-      var files = 'copy.' + COPY_PATHS[j] + '.files';
-      var filesCfg = grunt.config.get(files);
-
-      for (var i = 0, l = filesCfg.length; i < l; ++i) {
-        var file = files + '.' + i;
-        var fileCfg = grunt.config.get(file);
-
-        if (filepath.indexOf(fileCfg.cwd) !== -1) {
-          grunt.config(file + '.src', filepath.replace(fileCfg.cwd, ''));
-        } else {
-          grunt.config(file + '.src', []);
-        }
+      if (filepath.indexOf(fileCfg.cwd) !== -1) {
+        grunt.config(file + '.src', filepath.replace(fileCfg.cwd, ''));
+      } else {
+        grunt.config(file + '.src', []);
       }
     }
   });
@@ -263,6 +266,7 @@ module.exports = function (grunt) {
     'copy:app',
     'copy:css_cartodb',
     'compass',
+    'copy:css_tileo',
     'copy:css_cartodb3',
     'sass',
     'concat:css'
@@ -283,12 +287,12 @@ module.exports = function (grunt) {
     grunt.task.run('browserify');
   });
 
-  grunt.registerTask('cdb', 'build Cartodb.js', function() {
+  grunt.registerTask('cdb', 'build Cartodb.js', function () {
     var done = this.async();
 
     require('child_process').exec('make update_cdb', function (error, stdout, stderr) {
       if (error) {
-        grunt.log.fail('cartodb.js not updated (due to '+ stdout + ', ' + stderr + ')');
+        grunt.log.fail('cartodb.js not updated (due to ' + stdout + ', ' + stderr + ')');
       } else {
         grunt.log.ok('cartodb.js updated');
       }
@@ -298,21 +302,11 @@ module.exports = function (grunt) {
 
   grunt.registerTask('js_editor', [
     'cdb',
-    'copy:js_cartodb',
+    'setConfig:env.browserify_watch:true',
+    'npm-carto-node',
     'run_browserify',
     'concat:js',
     'jst'
-  ]);
-
-  grunt.registerTask('js_builder', [
-    'copy:locale',
-    'copy:js_cartodb3',
-    'copy:js_test_cartodb3'
-  ]);
-
-  grunt.registerTask('js', [
-    'js_editor',
-    'js_builder'
   ]);
 
   grunt.registerTask('beforeDefault', [
@@ -322,19 +316,23 @@ module.exports = function (grunt) {
 
   grunt.registerTask('pre', [
     'beforeDefault',
-    'js',
+    'js_editor',
     'css',
     'manifest'
   ]);
 
   registerCmdTask('npm-dev', {cmd: 'npm', args: ['run', 'dev']});
   registerCmdTask('npm-start', {cmd: 'npm', args: ['run', 'start']});
+  registerCmdTask('npm-build', {cmd: 'npm', args: ['run', 'build']});
+  registerCmdTask('npm-build-static', {cmd: 'npm', args: ['run', 'build:static']});
+  registerCmdTask('npm-carto-node', {cmd: 'npm', args: ['run', 'carto-node']});
 
   /**
    * `grunt dev`
    */
 
   grunt.registerTask('dev', [
+    'npm-carto-node',
     'pre',
     'npm-start'
   ]);
@@ -344,25 +342,9 @@ module.exports = function (grunt) {
     'npm-dev'
   ]);
 
-  // still have to use this custom task because registerCmdTask outputs tons of warnings like:
-  // path/to/some/ignored/files:0:0: File ignored because of your .eslintignore file. Use --no-ignore to override.
-  grunt.registerTask('lint', 'lint source files', function () {
-    var done = this.async();
-    require('child_process').exec('(git diff --name-only --relative; git diff origin/master.. --name-only --relative) | grep \'\\.js\\?$\' | xargs node_modules/.bin/semistandard', function (error, stdout, stderr) {
-      if (error) {
-        grunt.log.fail(error);
-
-        // Filter out lines that are ignored,
-        // e.g. "src/foobar.js:0:0: File ignored because of your .eslintignore file. Use --no-ignore to override."
-        grunt.log.fail(stdout.replace(/.+--no-ignore.+(\r?\n|\r)/g, ''));
-        grunt.fail.warn('try `node_modules/.bin/semistandard --format src/filename.js` to auto-format code (you might still need to fix some things manually).');
-      } else {
-        grunt.log.ok('All linted files OK!');
-        grunt.log.writelns('>> Note that files listed in .eslintignore are not linted');
-      }
-      done();
-    });
-  });
+  grunt.registerTask('lint', [
+    'eslint'
+  ]);
 
   grunt.registerTask('sourcemaps', 'generate sourcemaps, to be used w/ trackjs.com for bughunting', [
     'setConfig:assets_dir:./tmp/sourcemaps',
@@ -373,14 +355,18 @@ module.exports = function (grunt) {
     'uglify'
   ]);
 
-  registerCmdTask('npm-build', {cmd: 'npm', args: ['run', 'build']});
-
   grunt.registerTask('build', [
+    'npm-carto-node',
     'pre',
     'copy:js',
     'exorcise',
     'uglify',
     'npm-build'
+  ]);
+
+  grunt.registerTask('build-static', 'generate static files and needed vendor scripts', [
+    'npm-carto-node',
+    'npm-build-static'
   ]);
 
   /**
@@ -410,11 +396,11 @@ module.exports = function (grunt) {
    * `grunt test`
    */
   grunt.registerTask('test', '(CI env) Re-build JS files and run all tests. For manual testing use `grunt jasmine` directly', [
+    'connect:test',
     'beforeDefault',
     'js_editor',
     'jasmine:cartodbui',
-    'js_builder',
-    'affected:all',
+    'affected',
     'bootstrap_webpack_builder_specs',
     'webpack:builder_specs',
     'jasmine:affected',
@@ -422,11 +408,9 @@ module.exports = function (grunt) {
   ]);
 
   /**
-   * `grunt affected_specs` compile Builder specs using only affected ones by the current branch.
-   * `grunt affected_specs --specs=all` compile all Builder specs.
+   * `grunt test:browser` compile all Builder specs and launch a webpage in the browser.
    */
-  grunt.registerTask('affected_specs', 'Build only specs affected by changes in current branch', [
-    'js_builder',
+  grunt.registerTask('test:browser', 'Build all Builder specs', [
     'affected',
     'bootstrap_webpack_builder_specs',
     'webpack:builder_specs',
@@ -435,24 +419,17 @@ module.exports = function (grunt) {
     'watch:js_affected'
   ]);
 
-  grunt.registerTask('build-jasmine-specrunners', _.chain(jasmineCfg)
-    .keys()
-    .map(function (name) {
-      return ['jasmine', name, 'build'].join(':');
-    })
-    .value());
-
-  grunt.registerTask('setConfig', 'Set a config property', function(name, val) {
+  grunt.registerTask('setConfig', 'Set a config property', function (name, val) {
     grunt.config.set(name, val);
   });
 
   /**
-   * `grunt editor_specs`
+   * `grunt affected_editor_specs` compile all Editor specs and launch a webpage in the browser.
    */
-  grunt.registerTask('editor_specs', [
-    'js_editor',
+  grunt.registerTask('affected_editor_specs', 'Build Editor specs', [
     'jasmine:cartodbui:build',
-    'connect:server'
+    'connect:server',
+    'watch:js_affected_editor'
   ]);
 
   /**

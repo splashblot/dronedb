@@ -393,7 +393,7 @@ module CartoDB
 	name = source_file.name[0...56]
 	name.slice! "_raster"
 	unless source_file.extension != '.tif'
-		name = name + '_raster'
+                name = name[0...51] + '_raster' # 5 chars for overviews (o_1_...,o_16_...) + 7 chars for ':_raster'
 	end 
 
 	Result.new(

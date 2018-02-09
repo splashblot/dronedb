@@ -9,7 +9,7 @@
 <div class="CDB-Text <%= @organization.present? ? 'Sessions' : 'Sessions-navy' %>" style="<%= @organization.present? ? background : '' %>">
   <div class="Sessions-content">
     <div class="Sessions-inner">
-      <div class="Sessions-notloggedin <%= "is-active" unless @google_plus_config.present? && (@organization.nil? || @organization.auth_google_enabled) %>">
+      <div class="Sessions-notloggedin is-active">
         <div class="u-inner">
           <div class="Sessions-left">
             <div class="Sessions-logoContainer">
@@ -28,11 +28,6 @@
 
             <div class="Sessions-form">
               <%= form_tag CartoDB.path(self, 'create_session'), class: "js-Loading-form" do %>
-
-                <% if @organization.nil? || @organization.auth_google_enabled %>
-                  <input type="hidden" value="" id="google_access_token" name="google_access_token" />
-                  <input type="hidden" value="0" id="google_access_filled" name="google_access_filled" />
-                <% end %>
 
                 <% if @organization.nil? || @organization.auth_username_password_enabled %>
 
@@ -81,15 +76,16 @@
 
                 <% end %>
               <% end %>
-              <div class="Sessions-field Sessions-oauthContainer">
-                <% if @google_plus_config.present? && (@organization.nil? || @organization.auth_google_enabled) %>
-                  <%= render partial: 'google_plus/google_plus_button',  locals: { config: @google_plus_config } %>
-                <% end %>
-
-                <% if @github_config.present? %>
-                  <%= render partial: 'github/github_button',  locals: { config: @github_config } %>
-                <% end %>
-              </div>
+              <% if @oauth_configs.any? %>
+                <div class="Sessions-field Sessions-oauthHeader">
+                  <p>OR LOG IN WITH:</p>
+                </div>
+                <div class="Sessions-field Sessions-oauthContainer">
+                  <% @oauth_configs.each do |config| %>
+                    <%= render partial: config.button_template, locals: { config: config } %>
+                  <% end %>
+                </div>
+              <% end %>
 
               <% if @user_login_url %>
                 <p class="CDB-Text CDB-Size-medium u-altTextColor u-tSpace--m u-justifyCenter Sessions-description">

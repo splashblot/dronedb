@@ -22,6 +22,7 @@ require_dependency 'carto/helpers/batch_queries_statement_timeout'
 require_dependency 'carto/user_authenticator'
 require_dependency 'carto/helpers/billing_cycle'
 require_dependency 'carto/email_cleaner'
+require_dependency 'carto/email_domain_validator'
 require_dependency 'carto/visualization'
 
 class User < Sequel::Model
@@ -36,6 +37,19 @@ class User < Sequel::Model
   include Carto::BillingCycle
   include Carto::EmailCleaner
   extend Carto::UserAuthenticator
+
+  OAUTH_SERVICE_TITLES = {
+    'gdrive' => 'Google Drive',
+    'dropbox' => 'Dropbox',
+    'box' => 'Box',
+    'mailchimp' => 'MailChimp',
+    'instagram' => 'Instagram'
+  }.freeze
+
+  OAUTH_SERVICE_REVOKE_URLS = {
+    'mailchimp' => 'http://admin.mailchimp.com/account/oauth2/',
+    'instagram' => 'http://instagram.com/accounts/manage_access/'
+  }.freeze
 
   self.strict_param_setting = false
 
@@ -108,6 +122,9 @@ class User < Sequel::Model
   DEFAULT_MAX_CONCURRENT_IMPORT_COUNT = 3
 
   COMMON_DATA_ACTIVE_DAYS = 31
+
+  STATE_ACTIVE = 'active'.freeze
+  STATE_LOCKED = 'locked'.freeze
 
   self.raise_on_typecast_failure = false
   self.raise_on_save_failure = false
@@ -364,17 +381,13 @@ class User < Sequel::Model
     end
   end
 
-  def can_delete
-    !has_shared_entities?
-  end
-
   def shared_entities
-    CartoDB::Permission.where(owner_id: id).all.select { |p| p.acl.present? }
+    CartoDB::SharedEntity.join(:visualizations, id: :entity_id).where(user_id: id)
   end
 
   def has_shared_entities?
     # Right now, cannot delete users with entities shared with other users or the org.
-    shared_entities.any?
+    shared_entities.first.present?
   end
 
   def ensure_nonviewer
@@ -390,7 +403,7 @@ class User < Sequel::Model
     @force_destroy = true
   end
 
-  def before_destroy
+  def before_destroy(skip_table_drop: false)
     ensure_nonviewer
 
     @org_id_for_org_wipe = nil
@@ -410,8 +423,8 @@ class User < Sequel::Model
         end
       end
 
-      unless can_delete || @force_destroy
-        raise CartoDB::BaseCartoDBError.new('Cannot delete user, has shared entities')
+      if !@force_destroy && has_shared_entities?
+        raise CartoDB::SharedEntitiesError.new('Cannot delete user, has shared entities')
       end
 
       has_organization = true
@@ -419,9 +432,11 @@ class User < Sequel::Model
 
     begin
       # Remove user data imports, maps, layers and assets
-      delete_external_data_imports
-      delete_external_sources
-      Carto::VisualizationQueryBuilder.new.with_user_id(id).build.all.each(&:destroy)
+      ActiveRecord::Base.transaction do
+        delete_external_data_imports
+        delete_external_sources
+        Carto::VisualizationQueryBuilder.new.with_user_id(id).build.all.each(&:destroy)
+      end
 
       # This shouldn't be needed, because previous step deletes canonical visualizations.
       # Kept in order to support old data.
@@ -455,26 +470,7 @@ class User < Sequel::Model
     # Invalidate user cache
     invalidate_varnish_cache
 
-    # Delete the DB or the schema
-    if has_organization
-      unless error_happened
-        db_service.drop_organization_user(
-          organization_id,
-          is_owner: !@org_id_for_org_wipe.nil?,
-          force_destroy: @force_destroy
-        )
-      end
-    elsif ::User.where(database_name: database_name).count > 1
-      raise CartoDB::BaseCartoDBError.new(
-        'The user is not supposed to be in a organization but another user has the same database_name. Not dropping it')
-    elsif !error_happened
-      Thread.new {
-        conn = in_database(as: :cluster_admin)
-        db_service.drop_database_and_user(conn)
-        db_service.drop_user(conn)
-      }.join
-      db_service.monitor_user_notification
-    end
+    drop_database(has_organization) unless skip_table_drop || error_happened
 
     # Remove metadata from redis last (to avoid cutting off access to SQL API if db deletion fails)
     unless error_happened
@@ -483,6 +479,26 @@ class User < Sequel::Model
     end
 
     feature_flags_user.each(&:delete)
+  end
+
+  def drop_database(has_organization)
+    if has_organization
+      db_service.drop_organization_user(
+        organization_id,
+        is_owner: !@org_id_for_org_wipe.nil?,
+        force_destroy: @force_destroy
+      )
+    elsif ::User.where(database_name: database_name).count > 1
+      raise CartoDB::BaseCartoDBError.new(
+        'The user is not supposed to be in a organization but another user has the same database_name. Not dropping it')
+    else
+      Thread.new {
+        conn = in_database(as: :cluster_admin)
+        db_service.drop_database_and_user(conn)
+        db_service.drop_user(conn)
+      }.join
+      db_service.monitor_user_notification
+    end
   end
 
   def delete_external_data_imports
@@ -795,6 +811,18 @@ class User < Sequel::Model
       upgraded_at + TRIAL_DURATION_DAYS.days
     else
       nil
+    end
+  end
+
+  def remaining_days_deletion
+    return nil unless state == STATE_LOCKED
+    begin
+      deletion_date = Cartodb::Central.new.get_user(username).fetch('scheduled_deletion_date', nil)
+      return nil unless deletion_date
+      (deletion_date.to_date - Date.today).to_i
+    rescue => e
+      CartoDB::Logger.warning(exception: e, message: 'Something went wrong calculating the number of remaining days for account deletion')
+      return nil
     end
   end
 
@@ -1182,6 +1210,55 @@ class User < Sequel::Model
     !Carto::Ldap::Manager.new.configuration_present?
   end
 
+  def cant_be_deleted_reason
+    if organization_owner?
+      "You can't delete your account because you are admin of an organization"
+    elsif Carto::UserCreation.http_authentication.where(user_id: id).first.present?
+      "You can't delete your account because you are using HTTP Header Authentication"
+    end
+  end
+
+  def get_oauth_services
+    datasources = CartoDB::Datasources::DatasourcesFactory.get_all_oauth_datasources
+    array = []
+
+    datasources.each do |serv|
+      obj ||= Hash.new
+
+      title = OAUTH_SERVICE_TITLES.fetch(serv, serv)
+      revoke_url = OAUTH_SERVICE_REVOKE_URLS.fetch(serv, nil)
+      enabled = case serv
+      when 'gdrive'
+        Cartodb.config[:oauth][serv]['client_id'].present?
+      when 'box'
+        Cartodb.config[:oauth][serv]['client_id'].present?
+      when 'gdrive'
+        Cartodb.config[:oauth][serv]['client_id'].present?
+      when 'dropbox'
+        Cartodb.config[:oauth]['dropbox']['app_key'].present?
+      when 'mailchimp'
+        Cartodb.config[:oauth]['mailchimp']['app_key'].present? && has_feature_flag?('mailchimp_import')
+      when 'instagram'
+        Cartodb.config[:oauth]['instagram']['app_key'].present? && has_feature_flag?('instagram_import')
+      else
+        true
+      end
+
+      if enabled
+        oauth = oauths.select(serv)
+
+        obj['name'] = serv
+        obj['title'] = title
+        obj['revoke_url'] = revoke_url
+        obj['connected'] = !oauth.nil? ? true : false
+
+        array.push(obj)
+      end
+    end
+
+    array
+  end
+
   # This method is innaccurate and understates point based tables (the /2 is to account for the_geom_webmercator)
   # TODO: Without a full table scan, ignoring the_geom_webmercator, we cannot accuratly asses table size
   # Needs to go on a background job.
@@ -1224,8 +1301,10 @@ class User < Sequel::Model
     self.over_disk_quota? || self.over_table_quota?
   end
 
-  def remaining_quota(use_total = false, db_size_in_bytes = self.db_size_in_bytes)
-    self.quota_in_bytes - db_size_in_bytes
+  def remaining_quota(_use_total = false, db_size_in_bytes = self.db_size_in_bytes)
+    return nil unless db_size_in_bytes
+
+    quota_in_bytes - db_size_in_bytes
   end
 
   def disk_quota_overspend
@@ -1310,6 +1389,8 @@ class User < Sequel::Model
 
   # Get a count of visualizations with some optional filters
   def visualization_count(filters = {})
+    return 0 unless id
+
     vqb = Carto::VisualizationQueryBuilder.new
     vqb.with_type(filters[:type]) if filters[:type]
     vqb.with_privacy(filters[:privacy]) if filters[:privacy]
@@ -1440,6 +1521,10 @@ class User < Sequel::Model
     account_url(request_protocol) + '/plan'
   end
 
+  def update_payment_url(request_protocol)
+    account_url(request_protocol) + '/update_payment'
+  end
+
   # Special url that goes to Central if active
   def upgrade_url(request_protocol)
     cartodb_com_hosted? ? '' : (account_url(request_protocol) + '/upgrade')
@@ -1509,14 +1594,8 @@ class User < Sequel::Model
   # return the default basemap based on the default setting. If default attribute is not set, first basemaps is returned
   # it only takes into account basemaps enabled for that user
   def default_basemap
-    default = if google_maps_enabled? && basemaps['GMaps'].present?
-                ['GMaps', basemaps['GMaps']]
-              else
-                basemaps.find { |_, group_basemaps| group_basemaps.find { |_, attr| attr['default'] } }
-              end
-    default ||= basemaps.first
-    # return only the attributes
-    default[1].first[1]
+    default = google_maps_enabled? && basemaps['GMaps'].present? ? basemaps.slice('GMaps') : basemaps
+    Cartodb.default_basemap(default)
   end
 
   def copy_account_features(to)
@@ -1599,6 +1678,25 @@ class User < Sequel::Model
 
   def destroy_cascade
     set_force_destroy
+    destroy
+  end
+
+  def relevant_frontend_version
+    frontend_version || CartoDB::Application.frontend_version
+  end
+
+  def active?
+    state == STATE_ACTIVE
+  end
+
+  def locked?
+    state == STATE_LOCKED
+  end
+
+  # Central will request some data back to cartodb (quotas, for example), so the user still needs to exist.
+  # Corollary: multithreading is needed for deletion to work.
+  def destroy_account
+    delete_in_central
     destroy
   end
 
@@ -1713,7 +1811,7 @@ class User < Sequel::Model
       return true
     end
 
-    organization.whitelisted_email_domains.include?(email.split('@')[1])
+    Carto::EmailDomainValidator.validate_domain(email, organization.whitelisted_email_domains)
   end
 
   def created_via
