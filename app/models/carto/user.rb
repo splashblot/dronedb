@@ -27,13 +27,17 @@ class Carto::User < ActiveRecord::Base
   OBS_GENERAL_BLOCK_SIZE = 1000
   MAPZEN_ROUTING_BLOCK_SIZE = 1000
 
+  STATE_ACTIVE = 'active'.freeze
+  STATE_LOCKED = 'locked'.freeze
+
   # INFO: select filter is done for security and performance reasons. Add new columns if needed.
   DEFAULT_SELECT = "users.email, users.username, users.admin, users.organization_id, users.id, users.avatar_url," \
                    "users.api_key, users.database_schema, users.database_name, users.name, users.location," \
                    "users.disqus_shortname, users.account_type, users.twitter_username, users.google_maps_key, " \
                    "users.viewer, users.quota_in_bytes, users.database_host, users.crypted_password, " \
                    "users.builder_enabled, users.private_tables_enabled, users.private_maps_enabled, " \
-                   "users.org_admin, users.last_name, users.google_maps_private_key".freeze
+                   "users.org_admin, users.last_name, users.google_maps_private_key, users.website, " \
+                   "users.description, users.available_for_hire, users.frontend_version, users.asset_host".freeze
 
   has_many :tables, class_name: Carto::UserTable, inverse_of: :user
   has_many :visualizations, inverse_of: :user
@@ -63,6 +67,8 @@ class Carto::User < ActiveRecord::Base
   has_many :groups, :through => :users_group
 
   has_many :received_notifications, inverse_of: :user
+
+  has_many :api_keys, inverse_of: :user
 
   delegate [
       :database_username, :database_password, :in_database,
@@ -339,7 +345,9 @@ class Carto::User < ActiveRecord::Base
   end
 
   #TODO: Remove unused param `use_total`
-  def remaining_quota(use_total = false, db_size = service.db_size_in_bytes)
+  def remaining_quota(_use_total = false, db_size = service.db_size_in_bytes)
+    return nil unless db_size
+
     self.quota_in_bytes - db_size
   end
 
@@ -425,6 +433,18 @@ class Carto::User < ActiveRecord::Base
     end
   end
 
+  def remaining_days_deletion
+    return nil unless state == STATE_LOCKED
+    begin
+      deletion_date = Cartodb::Central.new.get_user(username).fetch('scheduled_deletion_date', nil)
+      return nil unless deletion_date
+      (deletion_date.to_date - Date.today).to_i
+    rescue => e
+      CartoDB::Logger.warning(exception: e, message: 'Something went wrong calculating the number of remaining days for account deletion')
+      return nil
+    end
+  end
+
   def viewable_by?(viewer)
     id == viewer.id || organization.try(:admin?, viewer)
   end
@@ -439,6 +459,8 @@ class Carto::User < ActiveRecord::Base
       !created_with_http_authentication? &&
       !organization.try(:auth_saml_enabled?)
   end
+
+  alias_method :should_display_old_password?, :needs_password_confirmation?
 
   def oauth_signin?
     google_sign_in || github_user_id.present?
@@ -475,7 +497,7 @@ class Carto::User < ActiveRecord::Base
     # Circumvent DEFAULT_SELECT, didn't add auth_token there for sercurity (presenters, etc)
     auth_token = Carto::User.select(:auth_token).find(id).auth_token
 
-    auth_token || generate_auth_token
+    auth_token || generate_and_save_auth_token
   end
 
   def notifications_for_category(category)
@@ -512,6 +534,98 @@ class Carto::User < ActiveRecord::Base
 
   def view_dashboard
     update_column(:dashboard_viewed_at, Time.now)
+  end
+
+  # Special url that goes to Central if active (for old dashboard only)
+  def account_url(request_protocol)
+    request_protocol + CartoDB.account_host + CartoDB.account_path + '/' + username if CartoDB.account_host
+  end
+
+  # Special url that goes to Central if active
+  def plan_url(request_protocol)
+    account_url(request_protocol) + '/plan'
+  end
+
+  def relevant_frontend_version
+    frontend_version || CartoDB::Application.frontend_version
+  end
+
+  def cant_be_deleted_reason
+    if organization_owner?
+      "You can't delete your account because you are admin of an organization"
+    elsif Carto::UserCreation.http_authentication.where(user_id: id).first.present?
+      "You can't delete your account because you are using HTTP Header Authentication"
+    end
+  end
+
+  # Gets the list of OAuth accounts the user has (currently only used for synchronization)
+  # @return CartoDB::OAuths
+  def oauths
+    @oauths ||= CartoDB::OAuths.new(self)
+  end
+
+  def get_oauth_services
+    datasources = CartoDB::Datasources::DatasourcesFactory.get_all_oauth_datasources
+    array = []
+
+    datasources.each do |serv|
+      obj ||= Hash.new
+
+      title = ::User::OAUTH_SERVICE_TITLES.fetch(serv, serv)
+      revoke_url = ::User::OAUTH_SERVICE_REVOKE_URLS.fetch(serv, nil)
+      enabled = case serv
+        when 'gdrive'
+          Cartodb.config[:oauth][serv]['client_id'].present?
+        when 'box'
+          Cartodb.config[:oauth][serv]['client_id'].present?
+        when 'gdrive'
+          Cartodb.config[:oauth][serv]['client_id'].present?
+        when 'dropbox'
+          Cartodb.config[:oauth]['dropbox']['app_key'].present?
+        when 'mailchimp'
+          Cartodb.config[:oauth]['mailchimp']['app_key'].present? && has_feature_flag?('mailchimp_import')
+        when 'instagram'
+          Cartodb.config[:oauth]['instagram']['app_key'].present? && has_feature_flag?('instagram_import')
+        else
+          true
+      end
+
+      if enabled
+        oauth = oauths.select(serv)
+
+        obj['name'] = serv
+        obj['title'] = title
+        obj['revoke_url'] = revoke_url
+        obj['connected'] = !oauth.nil? ? true : false
+
+        array.push(obj)
+      end
+    end
+
+    array
+  end
+
+  def account_url(request_protocol)
+    if CartoDB.account_host
+      request_protocol + CartoDB.account_host + CartoDB.account_path + '/' + username
+    end
+  end
+
+  # Special url that goes to Central if active
+  def plan_url(request_protocol)
+    account_url(request_protocol) + '/plan'
+  end
+
+  def update_payment_url(request_protocol)
+    account_url(request_protocol) + '/update_payment'
+  end
+
+  def active?
+    state == STATE_ACTIVE
+  end
+
+  def locked?
+    state == STATE_LOCKED
   end
 
   private

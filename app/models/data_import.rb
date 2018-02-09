@@ -479,7 +479,6 @@ class DataImport < Sequel::Model
 
   def from_table
     log.append 'from_table()'
-
     number_of_tables = 1
     quota_checker = CartoDB::QuotaChecker.new(current_user)
     if quota_checker.will_be_over_table_quota?(number_of_tables)
@@ -488,6 +487,8 @@ class DataImport < Sequel::Model
 
     query = table_copy ? "SELECT * FROM #{table_copy}" : from_query
     new_table_name = import_from_query(table_name, query)
+    return true unless new_table_name && !overwrite_strategy?
+
     sanitize_columns(new_table_name)
 
     self.update(table_names: new_table_name, service_name: nil)
@@ -505,17 +506,30 @@ class DataImport < Sequel::Model
 
   def import_from_query(name, query)
     log.append 'import_from_query()'
-
     self.data_type    = TYPE_QUERY
     self.data_source  = query
     save
 
     taken_names = Carto::Db::UserSchema.new(current_user).table_names
-    table_name = Carto::ValidTableNameProposer.new.propose_valid_table_name(name, taken_names: taken_names)
-    # current_user.db_services.in_database.run(%{CREATE TABLE #{table_name} AS #{query}})
-    current_user.db_service.in_database_direct_connection(statement_timeout: DIRECT_STATEMENT_TIMEOUT) do |user_direct_conn|
-        user_direct_conn.run(%{CREATE TABLE #{table_name} AS #{query}})
+
+    if taken_names.include?(name) && collision_strategy == Carto::DataImportConstants::COLLISION_STRATEGY_SKIP
+      log.append("Table with name #{name} already exists. Skipping")
+      return
     end
+
+    table_name = Carto::ValidTableNameProposer.new.propose_valid_table_name(name, taken_names: taken_names)
+
+    if overwrite_strategy?
+      overwrite_table_from_query(table_name, name, query)
+      results.push CartoDB::Importer2::Result.new(success: true, error: nil)
+    else
+      current_user.db_service.in_database_direct_connection(
+        statement_timeout: DIRECT_STATEMENT_TIMEOUT
+      ) do |user_direct_conn|
+        user_direct_conn.run(%{CREATE TABLE #{table_name} AS #{query}})
+      end
+    end
+
     if current_user.over_disk_quota?
       log.append "Over storage quota. Dropping table #{table_name}"
       current_user.in_database.run(%{DROP TABLE #{table_name}})
@@ -525,7 +539,40 @@ class DataImport < Sequel::Model
       raise CartoDB::QuotaExceeded, 'More storage required'
     end
 
+    if (name.include?'_raster') && (table_copy.present? || (query.split.last.include?'_copy')) 
+      # Retrieve layer overviews
+      schema_table      = user[:database_schema]
+      orig_table = table_copy.present? ? table_copy : query.split.last
+      overviews = current_user.in_database["SELECT table_name FROM information_schema.tables WHERE table_schema= '#{schema_table}' AND  table_name LIKE 'o\_%#{orig_table}'"].all()
+      overviews.each do |ov|
+        exp               = ov[:table_name][/o_(.*?)_/m,1]
+        new_overview_name = "o_#{exp}_#{name}"
+        current_user.in_database.run(%{ CREATE TABLE "#{schema_table}"."#{new_overview_name}" AS SELECT * FROM "#{schema_table}"."#{ov[:table_name]}" })
+        current_user.in_database.run(%{ CREATE INDEX ON "#{schema_table}"."#{new_overview_name}" USING gist (st_convexhull("the_raster_webmercator")) })
+        current_user.in_database.run(%{ SELECT AddRasterConstraints('#{schema_table}', '#{new_overview_name}','the_raster_webmercator',TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,FALSE) })
+        current_user.in_database.run(%{ SELECT AddOverviewConstraints('#{schema_table}','#{new_overview_name}','the_raster_webmercator','#{schema_table}','#{name}','the_raster_webmercator',#{exp}) })
+      end
+    end
+
     table_name
+  end
+
+  def overwrite_table_from_query(new_table_name, overwrite_table_name, query)
+    importer = new_importer_with_unused_runner
+    importer.overwrite_register(
+      CartoDB::Importer2::Result.new(tables: [new_table_name]),
+      overwrite_table_name
+    ) do |database, schema|
+      database.execute(%{CREATE TABLE #{new_table_name} AS #{query}})
+      importer.drop("\"#{schema}\".\"#{overwrite_table_name}\"")
+      database.execute(%{
+        ALTER TABLE "#{schema}"."#{new_table_name}" RENAME TO "#{overwrite_table_name}"
+      })
+    end
+  end
+
+  def overwrite_strategy?
+    collision_strategy == Carto::DataImportConstants::COLLISION_STRATEGY_OVERWRITE
   end
 
   def sanitize_columns(table_name)
@@ -675,27 +722,9 @@ class DataImport < Sequel::Model
       database_options = pg_options
       self.host = database_options[:host]
 
-      runner = CartoDB::Importer2::Runner.new({
-                                                pg: database_options,
-                                                downloader: downloader,
-                                                log: log,
-                                                user: current_user,
-                                                unpacker: CartoDB::Importer2::Unp.new(Cartodb.config[:importer]),
-                                                post_import_handler: post_import_handler,
-                                                importer_config: Cartodb.config[:importer],
-                                                collision_strategy: collision_strategy
-                                              })
-      runner.loader_options = ogr2ogr_options.merge content_guessing_options
-      runner.set_importer_stats_host_info(Socket.gethostname)
-      registrar     = CartoDB::TableRegistrar.new(current_user, ::Table)
-      quota_checker = CartoDB::QuotaChecker.new(current_user)
-      database      = current_user.in_database
-      destination_schema = current_user.database_schema
-      public_user_roles = current_user.db_service.public_user_roles
-      overviews_creator = CartoDB::Importer2::Overviews.new(runner, current_user)
-      importer      = CartoDB::Connector::Importer.new(runner, registrar, quota_checker, database, id,
-                                                       overviews_creator,
-                                                       destination_schema, public_user_roles)
+      unp = CartoDB::Importer2::Unp.new(Cartodb.config[:importer], Cartodb.config[:ogr2ogr])
+
+      importer, runner = new_importer_with_runner(downloader, unp, post_import_handler)
     end
 
     [importer, runner, datasource_provider, manual_fields]
@@ -727,11 +756,64 @@ class DataImport < Sequel::Model
     public_user_roles = current_user.db_service.public_user_roles
     overviews_creator = CartoDB::Importer2::Overviews.new(connector, current_user)
     importer = CartoDB::Connector::Importer.new(
-      connector, registrar, quota_checker, database, id,
-      overviews_creator,
-      destination_schema, public_user_roles
+      runner: connector,
+      table_registrar: registrar,
+      quota_checker: quota_checker,
+      database: database,
+      data_import_id: id,
+      overviews_creator: overviews_creator,
+      destination_schema: destination_schema,
+      public_user_roles: public_user_roles
     )
     [importer, connector, nil, nil]
+  end
+
+  # Create an Importer object (using a Runner to fetch the data).
+  # This methods returns an array with two elements:
+  # * importer: the new importer (nil if download errors detected)
+  # * runner: the runner that the importer uses
+  def new_importer_with_runner(downloader, unpacker, post_import_handler)
+    runner = CartoDB::Importer2::Runner.new(
+      pg: pg_options,
+      downloader: downloader,
+      log: log,
+      user: user,
+      unpacker: unpacker,
+      post_import_handler: post_import_handler,
+      importer_config: Cartodb.config[:importer],
+      collision_strategy: collision_strategy
+    )
+
+    runner.loader_options = ogr2ogr_options.merge content_guessing_options
+    runner.set_importer_stats_host_info(Socket.gethostname)
+    registrar = CartoDB::TableRegistrar.new(current_user, ::Table)
+    quota_checker = CartoDB::QuotaChecker.new(current_user)
+    database = current_user.in_database
+    destination_schema = current_user.database_schema
+    public_user_roles = current_user.db_service.public_user_roles
+    overviews_creator = CartoDB::Importer2::Overviews.new(runner, current_user)
+    importer = CartoDB::Connector::Importer.new(
+      runner: runner,
+      table_registrar: registrar,
+      quota_checker: quota_checker,
+      database: database,
+      data_import_id: id,
+      overviews_creator: overviews_creator,
+      destination_schema: destination_schema,
+      public_user_roles: public_user_roles,
+      collision_strategy: collision_strategy
+    )
+
+    [importer, runner]
+  end
+
+  # Create an Importer object with a runner that it's not able to fetch data.
+  # This method is useful when you just need some logic from the Importer class
+  # This methods returns an array with two elements:
+  # * importer: the new importer (nil if download errors detected)
+  def new_importer_with_unused_runner
+    importer, = new_importer_with_runner(nil, nil, nil)
+    importer
   end
 
   # Run importer, store results and return success state.

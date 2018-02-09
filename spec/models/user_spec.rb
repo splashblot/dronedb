@@ -602,32 +602,18 @@ describe User do
     end
 
     describe '#gravatar_enabled?' do
-      before(:each) do
-        @avatars_config = Cartodb::config[:avatars]
-      end
-
-      after(:each) do
-        Cartodb::config[:avatars] = @avatars_config
-      end
-
       it 'should be enabled by default (every setting but false will enable it)' do
         user = ::User.new
-        Cartodb::config[:avatars] = {}
-        user.gravatar_enabled?.should be_true
-        Cartodb::config[:avatars] = { 'gravatar_enabled' => true }
-        user.gravatar_enabled?.should be_true
-        Cartodb::config[:avatars] = { 'gravatar_enabled' => 'true' }
-        user.gravatar_enabled?.should be_true
-        Cartodb::config[:avatars] = { 'gravatar_enabled' => 'wadus' }
-        user.gravatar_enabled?.should be_true
+        Cartodb.with_config(avatars: {}) { user.gravatar_enabled?.should be_true }
+        Cartodb.with_config(avatars: { 'gravatar_enabled' => true }) { user.gravatar_enabled?.should be_true }
+        Cartodb.with_config(avatars: { 'gravatar_enabled' => 'true' }) { user.gravatar_enabled?.should be_true }
+        Cartodb.with_config(avatars: { 'gravatar_enabled' => 'wadus' }) { user.gravatar_enabled?.should be_true }
       end
 
       it 'can be disabled' do
         user = ::User.new
-        Cartodb::config[:avatars] = { 'gravatar_enabled' => false }
-        user.gravatar_enabled?.should be_false
-        Cartodb::config[:avatars] = { 'gravatar_enabled' => 'false' }
-        user.gravatar_enabled?.should be_false
+        Cartodb.with_config(avatars: { 'gravatar_enabled' => false }) { user.gravatar_enabled?.should be_false }
+        Cartodb.with_config(avatars: { 'gravatar_enabled' => 'false' }) { user.gravatar_enabled?.should be_false }
       end
     end
   end
@@ -1561,9 +1547,9 @@ describe User do
 
       it 'deletes temporary analysis tables' do
         db = @org_user_2.in_database
-        db.run('CREATE TABLE analysis_123 (a int)')
+        db.run('CREATE TABLE analysis_cd60938c7b_2ad1345b134ed3cd363c6de651283be9bd65094e (a int)')
         db.run(%{INSERT INTO cdb_analysis_catalog (username, cache_tables, node_id, analysis_def)
-                 VALUES ('#{@org_user_2.username}', '{analysis_123}', 'a0', '{}')})
+                 VALUES ('#{@org_user_2.username}', '{analysis_cd60938c7b_2ad1345b134ed3cd363c6de651283be9bd65094e}', 'a0', '{}')})
         @org_user_2.destroy
 
         db = @org_user_owner.in_database
@@ -1957,9 +1943,6 @@ describe User do
 
   describe 'User creation and DB critical calls' do
     it 'Properly setups a new user (not belonging to an organization)' do
-      # INFO: avoiding enable_remote_db_user
-      Cartodb.config[:signups] = nil
-
       CartoDB::UserModule::DBService.any_instance.stubs(
         cartodb_extension_version_pre_mu?: nil,
         monitor_user_notification: nil,
@@ -2167,9 +2150,6 @@ describe User do
     end
 
     it 'Properly setups a new organization user' do
-      # INFO: avoiding enable_remote_db_user
-      Cartodb.config[:signups] = nil
-
       CartoDB::UserModule::DBService.any_instance.stubs(
         cartodb_extension_version_pre_mu?: nil,
         monitor_user_notification: nil,

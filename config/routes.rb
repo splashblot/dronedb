@@ -14,7 +14,9 @@ CartoDB::Application.routes.draw do
   root to: 'admin/pages#index'
 
   get   '/signup'           => 'signup#signup',     as: :signup
-  post  '/signup'           => 'signup#create',  as: :signup_organization_user
+  post  '/signup'           => 'signup#create',     as: :signup_organization_user
+  get   '(/user/:user_domain)(/u/:user_domain)/signup' => 'signup#signup', as: :signup_subdomainless
+  post  '(/user/:user_domain)(/u/:user_domain)/signup' => 'signup#create',  as: :signup_subdomainless_organization_user
   get   '(/user/:user_domain)(/u/:user_domain)/signup_http_authentication' => 'signup#create_http_authentication', as: :signup_http_authentication
   get   '(/user/:user_domain)(/u/:user_domain)/signup_http_authentication_in_progress' => 'signup#create_http_authentication_in_progress', as: :signup_http_authentication_in_progress
 
@@ -61,6 +63,8 @@ CartoDB::Application.routes.draw do
         end
       end
 
+      match '/builder/:id/*other', to: 'visualizations#show', via: :get
+
       resources :datasets, path: '/dataset', only: :show, constraints: { id: /[0-z\.\-]+/ }
     end
 
@@ -70,7 +74,8 @@ CartoDB::Application.routes.draw do
       }
     end
 
-    get '/github' => 'github#github', as: :github
+    get '/github' => 'oauth_login#github', as: :github
+    get '/google/oauth' => 'oauth_login#google', as: :google_oauth
     get '/saml/metadata' => 'saml#metadata'
   end
 
@@ -109,6 +114,9 @@ CartoDB::Application.routes.draw do
     delete '(/user/:user_domain)(/u/:user_domain)/account' => 'users#delete',        as: :account_delete_user
     put    '(/user/:user_domain)(/u/:user_domain)/account' => 'users#account_update', as: :account_update_user
     delete '(/user/:user_domain)(/u/:user_domain)/account/:id' => 'users#delete', as: :delete_user
+
+    # Lockout
+    get '(/user/:user_domain)(/u/:user_domain)/lockout' => 'users#lockout', as: :lockout
 
     # search
     get '(/user/:user_domain)(/u/:user_domain)/dashboard/search/:q'               => 'visualizations#index', as: :search
@@ -549,6 +557,7 @@ CartoDB::Application.routes.draw do
 
   scope module: 'superadmin', defaults: { format: :json } do
     get '/superadmin/get_databases_info' => 'platform#databases_info'
+    get '/superadmin/database_validation' => 'platform#database_validation'
     get '/superadmin/stats/total_users' => 'platform#total_users'
     get '/superadmin/stats/total_pay_users' => 'platform#total_pay_users'
     get '/superadmin/stats/total_datasets' => 'platform#total_datasets'
@@ -564,6 +573,11 @@ CartoDB::Application.routes.draw do
 
   scope module: 'carto/api', path: '(/user/:user_domain)(/u/:user_domain)/api/', defaults: { format: :json } do
     scope 'v3/' do
+      # Front/back split
+      get 'me' => 'users#me', as: :api_v3_users_me
+      put 'me' => 'users#update_me', as: :api_v3_users_update_me
+      delete 'me' => 'users#delete_me', as: :api_v3_users_delete_me
+
       scope 'maps/:map_id/layers/:map_layer_id', constraints: { map_id: /[^\/]+/, map_layer_id: /[^\/]+/ } do
         resources :widgets, only: [:show, :create, :update, :destroy], constraints: { id: /[^\/]+/ }
       end
@@ -573,6 +587,11 @@ CartoDB::Application.routes.draw do
       end
 
       resource :metrics, only: [:create]
+
+      resources :api_keys, only: [:create, :destroy, :index, :show], constraints: { id: /[^\/]+/ }
+      scope 'api_keys/:id/token' do
+        post 'regenerate' => 'api_keys#regenerate_token', as: :regenerate_api_key_token
+      end
 
       scope '/viz/:visualization_id', constraints: { id: /[^\/]+/ } do
         resources :analyses, only: [:show, :create, :update, :destroy], constraints: { id: /[^\/]+/ }

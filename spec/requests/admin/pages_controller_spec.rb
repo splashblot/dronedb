@@ -52,6 +52,24 @@ describe Admin::PagesController do
       user.delete
     end
 
+    it 'redirects_to dashboard if organization user is logged in' do
+      user = prepare_user(@org_user_name, @user_org, @belongs_to_org)
+
+      login_as(user, scope: user.username)
+
+      get "/u/#{@org_user_name}", {}, JSON_HEADER
+
+      last_response.status.should == 302
+
+      follow_redirect!
+
+      uri = URI.parse(last_request.url)
+      uri.host.should == "#{@org_name}.localhost.lan"
+      uri.path.should == "/u/#{@org_user_name}/dashboard"
+
+      user.delete
+    end
+
     it 'redirects if it is an org user but gets called without organization' do
       user = prepare_user(@org_user_name, @user_org, @belongs_to_org)
 
@@ -116,60 +134,58 @@ describe Admin::PagesController do
     end
 
     it 'redirects to local login page if no user is specified and Central is not enabled' do
-      old_cartodb_central_api = Cartodb.config[:cartodb_central_api]
-      Cartodb.config[:cartodb_central_api] = {}
-      user = prepare_user('anyuser')
-      host! 'localhost.lan'
-      CartoDB.stubs(:session_domain).returns('localhost.lan')
-      CartoDB.stubs(:subdomainless_urls?).returns(true)
+      Cartodb.with_config(cartodb_central_api: {}) do
+        user = prepare_user('anyuser')
+        host! 'localhost.lan'
+        CartoDB.stubs(:session_domain).returns('localhost.lan')
+        CartoDB.stubs(:subdomainless_urls?).returns(true)
 
-      get '', {}, JSON_HEADER
+        get '', {}, JSON_HEADER
 
-      last_response.status.should == 302
-      uri = URI.parse(last_response.location)
-      uri.host.should == 'localhost.lan'
-      uri.path.should == '/login'
-      follow_redirect!
-      last_response.status.should == 200
+        last_response.status.should == 302
+        uri = URI.parse(last_response.location)
+        uri.host.should == 'localhost.lan'
+        uri.path.should == '/login'
+        follow_redirect!
+        last_response.status.should == 200
 
-      Cartodb.config[:cartodb_central_api] = old_cartodb_central_api
-
-      user.delete
+        user.delete
+      end
     end
 
     it 'redirects to Central login page if no user is specified and Central is enabled' do
-      old_cartodb_central_api = Cartodb.config[:cartodb_central_api]
       central_host = 'somewhere.lan'
       central_port = 4321
-      Cartodb.config[:cartodb_central_api] = {
-        'host' => central_host,
-        'port' => central_port,
-        'username' => 'api',
-        'password' => 'test'
-      }
-      user = prepare_user('anyuser')
-      host! 'localhost.lan'
-      CartoDB.stubs(:session_domain).returns('localhost.lan')
-      CartoDB.stubs(:subdomainless_urls?).returns(true)
+      Cartodb.with_config(
+        cartodb_central_api: {
+          'host' => central_host,
+          'port' => central_port,
+          'username' => 'api',
+          'password' => 'test'
+        }
+      ) do
+        user = prepare_user('anyuser')
+        host! 'localhost.lan'
+        CartoDB.stubs(:session_domain).returns('localhost.lan')
+        CartoDB.stubs(:subdomainless_urls?).returns(true)
 
-      get '', {}, JSON_HEADER
+        get '', {}, JSON_HEADER
 
-      last_response.status.should == 302
-      uri = URI.parse(last_response.location)
-      uri.host.should == 'localhost.lan'
-      uri.path.should == '/login'
-      follow_redirect!
+        last_response.status.should == 302
+        uri = URI.parse(last_response.location)
+        uri.host.should == 'localhost.lan'
+        uri.path.should == '/login'
+        follow_redirect!
 
-      last_response.status.should == 302
-      uri = URI.parse(last_response.location)
-      uri.host.should == central_host
-      uri.port.should == central_port
-      uri.path.should == '/login'
-      follow_redirect!
+        last_response.status.should == 302
+        uri = URI.parse(last_response.location)
+        uri.host.should == central_host
+        uri.port.should == central_port
+        uri.path.should == '/login'
+        follow_redirect!
 
-      Cartodb.config[:cartodb_central_api] = old_cartodb_central_api
-
-      user.delete
+        user.delete
+      end
     end
 
     it 'redirects and loads the dashboard if the user is logged in' do
@@ -346,6 +362,8 @@ describe Admin::PagesController do
 
     if org_user
       org = mock
+      org.stubs(name: @org_name)
+      user.stubs(organization: org)
       Organization.stubs(:where).with(name: @org_name).returns([org])
       Organization.stubs(:where).with(name: @org_user_name).returns([org])
       ::User.any_instance.stubs(:belongs_to_organization?).with(org).returns(belongs_to_org)

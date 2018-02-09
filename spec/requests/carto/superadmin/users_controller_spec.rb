@@ -121,6 +121,15 @@ describe Carto::Superadmin::UsersController do
       it_behaves_like 'dataservices usage metrics'
     end
 
+    describe 'geocoder_mapbox' do
+      before(:all) do
+        @class = CartoDB::GeocoderUsageMetrics
+        @service = :geocoder_mapbox
+      end
+
+      it_behaves_like 'dataservices usage metrics'
+    end
+
     describe 'here_isolines' do
       before(:all) do
         @class = CartoDB::IsolinesUsageMetrics
@@ -134,6 +143,15 @@ describe Carto::Superadmin::UsersController do
       before(:all) do
         @class = CartoDB::IsolinesUsageMetrics
         @service = :mapzen_isolines
+      end
+
+      it_behaves_like 'dataservices usage metrics'
+    end
+
+    describe 'mapbox_isolines' do
+      before(:all) do
+        @class = CartoDB::IsolinesUsageMetrics
+        @service = :mapbox_isolines
       end
 
       it_behaves_like 'dataservices usage metrics'
@@ -161,6 +179,15 @@ describe Carto::Superadmin::UsersController do
       before(:all) do
         @class = CartoDB::RoutingUsageMetrics
         @service = :routing_mapzen
+      end
+
+      it_behaves_like 'dataservices usage metrics'
+    end
+
+    describe 'routing_mapbox' do
+      before(:all) do
+        @class = CartoDB::RoutingUsageMetrics
+        @service = :routing_mapbox
       end
 
       it_behaves_like 'dataservices usage metrics'
@@ -226,6 +253,33 @@ describe Carto::Superadmin::UsersController do
       get_json(usage_superadmin_user_url(UUIDTools::UUID.random_create.to_s), {}, superadmin_headers) do |response|
         response.status.should eq 404
       end
+    end
+  end
+
+  describe '#destroy' do
+    before(:all) do
+      @user = FactoryGirl.create(:carto_user)
+    end
+
+    after(:all) do
+      @user.destroy
+    end
+
+    it 'should return specific error when user has related entities' do
+      User.any_instance.stubs(:destroy).raises(CartoDB::SharedEntitiesError, 'Cannot delete user, has shared entities')
+      delete_json(superadmin_user_url(@user), {}, superadmin_headers) do |response|
+        response.status.should eq 422
+        response.body[:errorCode].should eq 'userHasSharedEntities'
+      end
+      User.any_instance.unstub(:destroy)
+    end
+
+    it 'should remove user with shared entities if force is present' do
+      User.any_instance.stubs(:has_shared_entities?).returns(true)
+      delete_json(superadmin_user_url(@user), { force: true }, superadmin_headers) do |response|
+        response.status.should eq 204
+      end
+      User.any_instance.unstub(:has_shared_entities?)
     end
   end
 end
