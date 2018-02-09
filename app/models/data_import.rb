@@ -539,7 +539,7 @@ class DataImport < Sequel::Model
       raise CartoDB::QuotaExceeded, 'More storage required'
     end
 
-    if (name.include?'_raster') && (table_copy.present? || (query.split.last.include?'_copy')) 
+    if (name.include?'_raster') && (table_copy.present? || (table_name.include?'_copy')) 
       # Retrieve layer overviews
       schema_table      = user[:database_schema]
       orig_table = table_copy.present? ? table_copy : query.split.last
