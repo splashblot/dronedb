@@ -2,7 +2,7 @@ module CartoDB
 
   NO_ERROR_CODE = nil
 
-  ERROR_SOURCE_CARTODB = 'cartodb'
+  ERROR_SOURCE_TileoDB = 'cartodb'
   ERROR_SOURCE_USER = 'user'
   ERROR_SOURCE_EXTERNAL = 'external'
 
@@ -11,13 +11,13 @@ module CartoDB
   IMPORTER_ERROR_CODES = {
     1 => {
       title: 'Install error',
-      what_about: "Something seems to be wrong with the CARTO install. Please <a href='mailto:support@cartob.com?subject=Install error'>contact us</a> and we'll try to fix that quickly.",
-      source: ERROR_SOURCE_CARTODB
+      what_about: "Something seems to be wrong with the Tileo install. Please <a href='mailto:support@cartob.com?subject=Install error'>contact us</a> and we'll try to fix that quickly.",
+      source: ERROR_SOURCE_TileoDB
     },
     1000 => {
       title: 'File I/O error',
       what_about: "Something seems to be wrong with the file you uploaded. Check that it is loading fine locally and try uploading it again.",
-      source: ERROR_SOURCE_CARTODB
+      source: ERROR_SOURCE_TileoDB
     },
     1001 => {
       title: 'Download error',
@@ -91,7 +91,7 @@ module CartoDB
     },
     1016 => {
       title: 'Dropbox permission revoked',
-      what_about: "CARTO has not permission to access your files at Dropbox. Please import file again.",
+      what_about: "Tileo has not permission to access your files at Dropbox. Please import file again.",
       source: ERROR_SOURCE_USER
     },
     1017 => {
@@ -116,7 +116,7 @@ module CartoDB
     },
     1021 => {
       title: 'Box permission revoked',
-      what_about: "CARTO has not permission to access your files at Box. Please import file again.",
+      what_about: "Tileo has not permission to access your files at Box. Please import file again.",
       source: ERROR_SOURCE_USER
     },
     1022 => {
@@ -205,7 +205,7 @@ module CartoDB
       source: ERROR_SOURCE_USER
     },
     2010 => {
-      title: 'Incompatible CARTO table',
+      title: 'Incompatible Tileo table',
       what_about: "There was an error when converting your table into a TILEO table. Please <a href='mailto:support@tileo.co?subject=CartoDBfy error'>contact us</a> and we will help you to load your data.",
       source: ERROR_SOURCE_USER
     },
@@ -241,7 +241,7 @@ module CartoDB
     },
     3101 => {
       title: 'Missing projection (.prj) file',
-      what_about: "CARTO needs a PRJ file for all Shapefile archives uploaded. Contact your data provider to see about aquiring one if it was missing. Otherwise see spatialreference.org to locate the right one if you know it. Remember, the file name for your .prj must be the same as your .shp.",
+      what_about: "Tileo needs a PRJ file for all Shapefile archives uploaded. Contact your data provider to see about aquiring one if it was missing. Otherwise see spatialreference.org to locate the right one if you know it. Remember, the file name for your .prj must be the same as your .shp.",
       source: ERROR_SOURCE_USER
     },
     3201 => {
@@ -293,7 +293,7 @@ module CartoDB
     6667 => {
       title: 'Import timed out',
       what_about: "There is been a problem importing your file due to the time is been taking to process it. Please try again and contact us if the problem persist.",
-      source: ERROR_SOURCE_CARTODB
+      source: ERROR_SOURCE_TileoDB
     },
     6668 => {
       title: 'Too many table rows',
@@ -316,7 +316,7 @@ module CartoDB
       title: 'Unknown',
       what_about: "Sorry, something went wrong and we're not sure what. Try
       uploading your file again, or <a href='mailto:support@tileo.co?subject=Unknown error'>contact us</a> and we'll try to help you quickly.",
-      source: ERROR_SOURCE_CARTODB
+      source: ERROR_SOURCE_TileoDB
     }
   }
 
