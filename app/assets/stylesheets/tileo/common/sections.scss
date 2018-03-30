@@ -2,24 +2,27 @@
 
 /* Sections */
 .TL-SectionContainer {
-  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
 }
+
 .TL-SectionContainer-inner {
   width: 940px;
   margin: 32px;
 }
+
 .TL-SectionTitle {
   width: 100%;
-  padding: 0 0 32px 0;
+  padding: 0 0 32px;
   border-bottom: 1px solid $silver;
 }
+
 .TL-SectionTitle-text {
   color: $black;
   font-family: 'Open Sans';
-  font-weight: 300;
   font-size: 28px;
+  font-weight: 300;
   line-height: 38px;
 }
