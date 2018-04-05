@@ -1,4 +1,4 @@
-<% if current_user.account_type == 'PERSONAL30' %>
+<% if current_user.present? && current_user.account_type == 'PERSONAL30' %>
     <div class="CDB-Text FlashMessage FlashMessage--main">
         <div class="u-inner">
             <div class="FlashMessage FlashMessage-info FlashMessage--main u-flex u-justifySpace u-alignCenter">

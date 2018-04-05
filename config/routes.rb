@@ -9,6 +9,10 @@
 # Can be also done at controller source files by using -> skip_before_filter :ensure_org_url_if_org_user
 
 CartoDB::Application.routes.draw do
+  get "iluvatar/organization"
+
+  get "iluvatar/user"
+
   # Double use: for user public dashboard AND org dashboard
   get '/[(user/:user_domain)(u/:user_domain)]' => 'admin/pages#public'
   root to: 'admin/pages#index'
