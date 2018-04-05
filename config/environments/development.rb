@@ -8,9 +8,11 @@ CartoDB::Application.configure do
   ActiveSupport::Dependencies.autoload_paths << File::join(Rails.root, 'lib')
   # ActiveSupport::Dependencies.autoload_paths << File::join( Rails.root, 'lib/central')
 
-  # The production environment is meant for finished, "live" apps.
+  # The production environment is meant for finished, “live” apps.
   # Code is not reloaded between requests
-  config.cache_classes = false
+  config.cache_classes = false  
+  # config.reload_classes_only_on_change = false # Always reload classes, not when file has changed. 
+  config.file_watcher = ActiveSupport::FileUpdateChecker
 
   # Full error reports are disabled and caching is turned on
   config.consider_all_requests_local       = true
@@ -53,7 +55,9 @@ CartoDB::Application.configure do
   # `bundle exec thin start --threaded -p 3000 --threadpool-size 5`.
   # Check your `config/database.yml` has `pool: 50` or higher for `development`.
   # The condition excludes this from resque, since it won't work with it and it doesn't need it.
-  config.threadsafe! unless $rails_rake_task
+
+  # Enabling threaded mode also enabled cache_classes, so code won't be automatically reloaded
+  # config.threadsafe! unless $rails_rake_task
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation can not be found)
