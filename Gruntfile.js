@@ -380,9 +380,9 @@ module.exports = function (grunt) {
     'invalidate'
   ]);
 
-  grunt.registerTask('affected', 'Generate only affected specs', function (option) {
-    requireWebpackTask().affected.call(this, option, grunt);
-  });
+  //  grunt.registerTask('affected', 'Generate only affected specs', function (option) {
+  //    requireWebpackTask().affected.call(this, option, grunt);
+  // });
 
   grunt.registerTask('bootstrap_webpack_builder_specs', 'Create the webpack compiler', function () {
     requireWebpackTask().bootstrap.call(this, 'builder_specs', grunt);
@@ -400,10 +400,10 @@ module.exports = function (grunt) {
     'beforeDefault',
     'js_editor',
     'jasmine:cartodbui',
-    'affected',
+    //  'affected',
     'bootstrap_webpack_builder_specs',
     'webpack:builder_specs',
-    'jasmine:affected',
+    //  'jasmine:affected',
     'lint'
   ]);
 

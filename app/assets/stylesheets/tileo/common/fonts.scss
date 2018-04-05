@@ -5,34 +5,41 @@
   font-style: normal;
   font-weight: 300;
   src: url(font-path('OpenSans-Light.eot'));
-  src: url(font-path('OpenSans-Light.eot?#iefix')) format('embedded-opentype'),
-  url(font-path('OpenSans-Light.woff')) format('woff'),
-  url(font-path('OpenSans-Light.ttf')) format('truetype');
+  src:
+    url(font-path('OpenSans-Light.eot?#iefix')) format('embedded-opentype'),
+    url(font-path('OpenSans-Light.woff')) format('woff'),
+    url(font-path('OpenSans-Light.ttf')) format('truetype');
 }
+
 @font-face {
   font-family: 'Open Sans';
   font-style: normal;
   font-weight: 400;
   src: url(font-path('OpenSans-Regular.eot'));
-  src: url(font-path('OpenSans-Regular.eot?#iefix')) format('embedded-opentype'),
-  url(font-path('OpenSans-Regular.woff')) format('woff'),
-  url(font-path('OpenSans-Regular.ttf')) format('truetype');
+  src:
+    url(font-path('OpenSans-Regular.eot?#iefix')) format('embedded-opentype'),
+    url(font-path('OpenSans-Regular.woff')) format('woff'),
+    url(font-path('OpenSans-Regular.ttf')) format('truetype');
 }
+
 @font-face {
   font-family: 'Open Sans';
   font-style: normal;
   font-weight: 600;
   src: url(font-path('OpenSans-Semibold.eot'));
-  src: url(font-path('OpenSans-Semibold.eot?#iefix')) format('embedded-opentype'),
-  url(font-path('OpenSans-Semibold.woff')) format('woff'),
-  url(font-path('OpenSans-Semibold.ttf')) format('truetype');
+  src:
+    url(font-path('OpenSans-Semibold.eot?#iefix')) format('embedded-opentype'),
+    url(font-path('OpenSans-Semibold.woff')) format('woff'),
+    url(font-path('OpenSans-Semibold.ttf')) format('truetype');
 }
+
 @font-face {
   font-family: 'Open Sans';
   font-style: normal;
   font-weight: 700;
   src: url(font-path('OpenSans-Bold.eot'));
-  src: url(font-path('OpenSans-Bold.eot?#iefix')) format('embedded-opentype'),
-  url(font-path('OpenSans-Bold.woff')) format('woff'),
-  url(font-path('OpenSans-Bold.ttf')) format('truetype');
+  src:
+    url(font-path('OpenSans-Bold.eot?#iefix')) format('embedded-opentype'),
+    url(font-path('OpenSans-Bold.woff')) format('woff'),
+    url(font-path('OpenSans-Bold.ttf')) format('truetype');
 }
