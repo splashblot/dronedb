@@ -2,7 +2,7 @@ module CartoDB
 
   NO_ERROR_CODE = nil
 
-  ERROR_SOURCE_TileoDB = 'cartodb'
+  ERROR_SOURCE_CARTODB = 'cartodb'
   ERROR_SOURCE_USER = 'user'
   ERROR_SOURCE_EXTERNAL = 'external'
 
@@ -12,12 +12,12 @@ module CartoDB
     1 => {
       title: 'Install error',
       what_about: "Something seems to be wrong with the Tileo install. Please <a href='mailto:support@cartob.com?subject=Install error'>contact us</a> and we'll try to fix that quickly.",
-      source: ERROR_SOURCE_TileoDB
+      source: ERROR_SOURCE_CARTODB
     },
     1000 => {
       title: 'File I/O error',
       what_about: "Something seems to be wrong with the file you uploaded. Check that it is loading fine locally and try uploading it again.",
-      source: ERROR_SOURCE_TileoDB
+      source: ERROR_SOURCE_CARTODB
     },
     1001 => {
       title: 'Download error',
@@ -293,7 +293,7 @@ module CartoDB
     6667 => {
       title: 'Import timed out',
       what_about: "There is been a problem importing your file due to the time is been taking to process it. Please try again and contact us if the problem persist.",
-      source: ERROR_SOURCE_TileoDB
+      source: ERROR_SOURCE_CARTODB
     },
     6668 => {
       title: 'Too many table rows',
@@ -316,7 +316,7 @@ module CartoDB
       title: 'Unknown',
       what_about: "Sorry, something went wrong and we're not sure what. Try
       uploading your file again, or <a href='mailto:support@agroviz.com?subject=Unknown error'>contact us</a> and we'll try to help you quickly.",
-      source: ERROR_SOURCE_TileoDB
+      source: ERROR_SOURCE_CARTODB
     }
   }
 
