@@ -11,7 +11,7 @@ module CartoDB
   IMPORTER_ERROR_CODES = {
     1 => {
       title: 'Install error',
-      what_about: "Something seems to be wrong with the Tileo install. Please <a href='mailto:support@cartob.com?subject=Install error'>contact us</a> and we'll try to fix that quickly.",
+      what_about: "Something seems to be wrong with the Tileo install. Please <a href='mailto:support@agroviz.com?subject=Install error'>contact us</a> and we'll try to fix that quickly.",
       source: ERROR_SOURCE_CARTODB
     },
     1000 => {
