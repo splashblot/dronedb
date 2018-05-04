@@ -140,7 +140,7 @@ class Admin::PagesController < Admin::AdminController
 
       # TODO: move to helper
       if @maps_count == 0 && @tables_num == 0
-        description << " uses Tileo to transform location intelligence into dynamic renderings that enable discovery of trends and patterns"
+        description << " uses Agroviz to transform location intelligence into dynamic renderings that enable discovery of trends and patterns"
       else
         description << " has"
 
@@ -156,7 +156,7 @@ class Admin::PagesController < Admin::AdminController
           description << " published #{@tables_num} public #{'dataset'.pluralize(@tables_num)}"
         end
 
-        description << " · View #{@name} Tileo profile for the latest activity and contribute to Open Data by creating an account in Tileo"
+        description << " · View #{@name} Agroviz profile for the latest activity and contribute to Open Data by creating an account in Agroviz"
       end
 
       @page_description = description
@@ -247,12 +247,12 @@ class Admin::PagesController < Admin::AdminController
 
     # TODO: move to helper
     if @datasets.size == 0
-      description << " uses Tileo to transform location intelligence into dynamic renderings that enable discovery of trends and patterns"
+      description << " uses Agroviz to transform location intelligence into dynamic renderings that enable discovery of trends and patterns"
     else
       description << " has published #{@datasets.size} public #{'dataset'.pluralize(@datasets.size)}"
     end
 
-    description << " · View #{@name} Tileo profile for the latest activity and contribute to Open Data by creating an account in Tileo"
+    description << " · View #{@name} Agroviz profile for the latest activity and contribute to Open Data by creating an account in Agroviz"
 
     @page_description = description
 
@@ -284,7 +284,7 @@ class Admin::PagesController < Admin::AdminController
 
     # TODO: move to helper
     if @visualizations.size == 0 && @tables_num == 0
-      description << " uses Tileo to transform location intelligence into dynamic renderings that enable discovery of trends and patterns"
+      description << " uses Agroviz to transform location intelligence into dynamic renderings that enable discovery of trends and patterns"
     else
       description << " has"
 
@@ -300,7 +300,7 @@ class Admin::PagesController < Admin::AdminController
         description << " published #{@tables_num} public #{'dataset'.pluralize(@tables_num)}"
       end
 
-      description << " · View #{@name} Tileo profile for the latest activity and contribute to Open Data by creating an account in Tileo"
+      description << " · View #{@name} Agroviz profile for the latest activity and contribute to Open Data by creating an account in Agroviz"
     end
 
     @page_description = description

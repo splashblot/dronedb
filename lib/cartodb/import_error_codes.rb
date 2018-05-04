@@ -11,7 +11,7 @@ module CartoDB
   IMPORTER_ERROR_CODES = {
     1 => {
       title: 'Install error',
-      what_about: "Something seems to be wrong with the Tileo install. Please <a href='mailto:support@agroviz.com?subject=Install error'>contact us</a> and we'll try to fix that quickly.",
+      what_about: "Something seems to be wrong with the Agroviz install. Please <a href='mailto:support@agroviz.com?subject=Install error'>contact us</a> and we'll try to fix that quickly.",
       source: ERROR_SOURCE_CARTODB
     },
     1000 => {
@@ -91,7 +91,7 @@ module CartoDB
     },
     1016 => {
       title: 'Dropbox permission revoked',
-      what_about: "Tileo has not permission to access your files at Dropbox. Please import file again.",
+      what_about: "Agroviz has not permission to access your files at Dropbox. Please import file again.",
       source: ERROR_SOURCE_USER
     },
     1017 => {
@@ -116,7 +116,7 @@ module CartoDB
     },
     1021 => {
       title: 'Box permission revoked',
-      what_about: "Tileo has not permission to access your files at Box. Please import file again.",
+      what_about: "Agroviz has not permission to access your files at Box. Please import file again.",
       source: ERROR_SOURCE_USER
     },
     1022 => {
@@ -205,8 +205,8 @@ module CartoDB
       source: ERROR_SOURCE_USER
     },
     2010 => {
-      title: 'Incompatible Tileo table',
-      what_about: "There was an error when converting your table into a TILEO table. Please <a href='mailto:support@agroviz.com?subject=CartoDBfy error'>contact us</a> and we will help you to load your data.",
+      title: 'Incompatible Agroviz table',
+      what_about: "There was an error when converting your table into a AGROVIZ table. Please <a href='mailto:support@agroviz.com?subject=CartoDBfy error'>contact us</a> and we will help you to load your data.",
       source: ERROR_SOURCE_USER
     },
     2011 => {
@@ -241,7 +241,7 @@ module CartoDB
     },
     3101 => {
       title: 'Missing projection (.prj) file',
-      what_about: "Tileo needs a PRJ file for all Shapefile archives uploaded. Contact your data provider to see about aquiring one if it was missing. Otherwise see spatialreference.org to locate the right one if you know it. Remember, the file name for your .prj must be the same as your .shp.",
+      what_about: "Agroviz needs a PRJ file for all Shapefile archives uploaded. Contact your data provider to see about aquiring one if it was missing. Otherwise see spatialreference.org to locate the right one if you know it. Remember, the file name for your .prj must be the same as your .shp.",
       source: ERROR_SOURCE_USER
     },
     3201 => {

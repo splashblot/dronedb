@@ -3,7 +3,7 @@ module CartoGearsApi
     class UsersService
       # Returns the logged user at the request.
       #
-      # @param request [ActionDispatch::Request] Tileo request, as received in any controller.
+      # @param request [ActionDispatch::Request] CARTO request, as received in any controller.
       # @return [User] the user.
       def logged_user(request)
         CartoGearsApi::Users::User.from_model(request.env['warden'].user(CartoDB.extract_subdomain(request)))

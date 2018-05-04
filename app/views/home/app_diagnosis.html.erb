@@ -1,4 +1,4 @@
-<% content_for :title do %>Tileo Diagnosis
+<% content_for :title do %>Agroviz Diagnosis
 <% end %>
 
 <%= content_for(:css) do %>
@@ -50,9 +50,9 @@
     </style>
 <% end %>
 
-<h1>Tileo diagnosis</h1>
+<h1>Agroviz diagnosis</h1>
 
-<p>This page displays information about your installation of Tileo and dependencies. If any of the checks displays an
+<p>This page displays information about your installation of Agroviz and dependencies. If any of the checks displays an
   error please follow instructions and install supported versions.</p>
   <% @diagnosis.each { |d| %>
       <dt><span class="component"><%= d[0] %></span> <span class="status <%= d[1] %>"><%= d[1] %></span></dt>

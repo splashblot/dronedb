@@ -6,8 +6,8 @@
   <div class="OnBoarding-welcomeContent">
     <div class="CDB-Text OnBoarding-welcomeContentInner">
       <p class="OnBoarding-welcomeContentTitle OnBoarding-welcomeContentMargin">Welcome back,<br/><%= @user.username %>!</p>
-      <p class="OnBoarding-welcomeContentText OnBoarding-welcomeContentMargin">You've reached the end of your Tileo trial period.</p>
-      <p class="OnBoarding-welcomeContentText OnBoarding-welcomeContentMargin">By upgrading, you'll be able to continue using Tileo. Our Professional plan is a great fit for occasional use, and our Enterprise plans offer access to the Data Observatory, private sharing, custom connectors, and business-strength data services.</p>
+      <p class="OnBoarding-welcomeContentText OnBoarding-welcomeContentMargin">You've reached the end of your Agroviz trial period.</p>
+      <p class="OnBoarding-welcomeContentText OnBoarding-welcomeContentMargin">By upgrading, you'll be able to continue using Agroviz. Our Professional plan is a great fit for occasional use, and our Enterprise plans offer access to the Data Observatory, private sharing, custom connectors, and business-strength data services.</p>
       <% if @expiration_days %>
         <p class="OnBoarding-welcomeContentText OnBoarding-welcomeContentMargin">Your account and data will be preserved for <%= pluralize(@expiration_days, "day") %>, so that upon upgrade you will regain access to the data and maps.<br/>If you're a student or an ambassador, remember you can also qualify for our <a class="u-whiteTextColor" href="https://carto.com/community/">Community Program</a>.</p>
       <% else %>

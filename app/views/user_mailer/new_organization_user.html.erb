@@ -1,6 +1,6 @@
 <tr>
   <td align="left" style="font-size: 14px; line-height: 25px; font-family: 'Open Sans', Helvetica, Arial, sans-serif; color: #647083;">
-    <p>Te han invitado a Tileo como parte de la organización <strong><%= @organization.name_to_display %></strong>. Por favor, inicia sesión con tu usuario de la organización (<%= @user.username %>) y la contraseña <%= @user_needs_password ? 'proporcionada por el/la administrador/a' : 'que introdujiste' %><%= ' una vez actives tu cuenta' unless @enable_account_link.nil? %>.</p>
+    <p>Te han invitado a Agroviz como parte de la organización <strong><%= @organization.name_to_display %></strong>. Por favor, inicia sesión con tu usuario de la organización (<%= @user.username %>) y la contraseña <%= @user_needs_password ? 'proporcionada por el/la administrador/a' : 'que introdujiste' %><%= ' una vez actives tu cuenta' unless @enable_account_link.nil? %>.</p>
 
     <% if @user_needs_password %>
       <p>Si no has recibido tu contraseña, contacta con el/la administrador/a en <strong><%= @owner.email %></strong>.</p>

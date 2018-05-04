@@ -14,7 +14,7 @@ class OrganizationMailer < ActionMailer::Base
   def invitation(invitation, email)
     @invitation = invitation
 
-    @subject = "Te han invitado a formar parte de la organización #{@invitation.organization.name} en Tileo"
+    @subject = "Te han invitado a formar parte de la organización #{@invitation.organization.name} en Agroviz"
 
     base_url = CartoDB.base_url(@invitation.organization.name)
     token = invitation.token(email)
