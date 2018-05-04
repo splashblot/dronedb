@@ -26,7 +26,7 @@ module CartoDB
     },
     1002 => {
       title: 'Unsupported/Unrecognized file type',
-      what_about: "Should we support this filetype? Let us know in our <a href='mailto:support@tileo.co'>support email</a>!",
+      what_about: "Should we support this filetype? Let us know in our <a href='mailto:support@agroviz.com'>support email</a>!",
       source: ERROR_SOURCE_USER
     },
     1003 => {
@@ -41,12 +41,12 @@ module CartoDB
     },
     1005 => {
       title: 'Empty file',
-      what_about: "The file appears to have no processable information. Double check that the file is indeed correct and it contains supported data. If everything appears fine, try uploading it again or <a href='mailto:support@tileo.co?subject=Empty file'>contact us</a>.",
+      what_about: "The file appears to have no processable information. Double check that the file is indeed correct and it contains supported data. If everything appears fine, try uploading it again or <a href='mailto:support@agroviz.com?subject=Empty file'>contact us</a>.",
       source: ERROR_SOURCE_USER
     },
     1006 => {
       title: 'Invalid SHP file',
-      what_about: "Your file appears broken. Double check that all the necessary parts of the file are included in your ZIP archive (including .shp, .prj etc.). Also, try opening the file locally using QGIS or another tool. If everything appears okay, <a href='mailto:support@tileo.co?subject=Invalid SHP file'>contact us</a>.",
+      what_about: "Your file appears broken. Double check that all the necessary parts of the file are included in your ZIP archive (including .shp, .prj etc.). Also, try opening the file locally using QGIS or another tool. If everything appears okay, <a href='mailto:support@agroviz.com?subject=Invalid SHP file'>contact us</a>.",
       source: ERROR_SOURCE_USER
     },
     1007 => {
@@ -71,7 +71,7 @@ module CartoDB
     },
     1012 => {
       title: 'Error connecting to datasource',
-      what_about: "There was an error trying to connect to the datasource. If this problem stays, please contact <a href='mailto:support@tileo.co?subject=Error connecting to datasource'>support@tileo.co</a>.",
+      what_about: "There was an error trying to connect to the datasource. If this problem stays, please contact <a href='mailto:support@agroviz.com?subject=Error connecting to datasource'>support@agroviz.com</a>.",
       source: ERROR_SOURCE_EXTERNAL
     },
     1013 => {
@@ -161,7 +161,7 @@ module CartoDB
     },
     2001 => {
       title: 'Unable to load data',
-      what_about: "We couldn't load data from your file into the database.  Please <a href='mailto:support@tileo.co?subject=Import load error'>contact us</a> and we will help you to load your data.",
+      what_about: "We couldn't load data from your file into the database.  Please <a href='mailto:support@agroviz.com?subject=Import load error'>contact us</a> and we will help you to load your data.",
       source: ERROR_SOURCE_USER
     },
     2002 => {
@@ -206,7 +206,7 @@ module CartoDB
     },
     2010 => {
       title: 'Incompatible Tileo table',
-      what_about: "There was an error when converting your table into a TILEO table. Please <a href='mailto:support@tileo.co?subject=CartoDBfy error'>contact us</a> and we will help you to load your data.",
+      what_about: "There was an error when converting your table into a TILEO table. Please <a href='mailto:support@agroviz.com?subject=CartoDBfy error'>contact us</a> and we will help you to load your data.",
       source: ERROR_SOURCE_USER
     },
     2011 => {
@@ -266,7 +266,7 @@ module CartoDB
     },
     8003 => {
       title: 'Error creating table from SQL query',
-      what_about: "We couldn't create a table from your query. Please check it doesn't return duplicate column names. Please <a href='mailto:support@tileo.co?subject=Unknown error'>contact us</a> if you need help editing your query.",
+      what_about: "We couldn't create a table from your query. Please check it doesn't return duplicate column names. Please <a href='mailto:support@agroviz.com?subject=Unknown error'>contact us</a> if you need help editing your query.",
       source: ERROR_SOURCE_USER
     },
     8004 => {
@@ -281,13 +281,13 @@ module CartoDB
     },
     8006 => {
       title: "Not enough Twitter credits",
-      what_about: "Unfortunately, you don't have enough Twitter credits to proceed. Please contact <a href='mailto:sales@tileo.co?subject=Exceeded%20Twitter%20quota'>" \
+      what_about: "Unfortunately, you don't have enough Twitter credits to proceed. Please contact <a href='mailto:sales@agroviz.com?subject=Exceeded%20Twitter%20quota'>" \
                   "Sales</a> if you have questions about how to obtain more credits.",
       source: ERROR_SOURCE_USER
     },
     6666 => {
       title: 'Dataset too big',
-      what_about: "The dataset you tried to import is too big and cannot be processed. If the dataset allows it, you can try splitting it into smaller files and then append them once imported, or contact our support team at <a href='mailto:support@tileo.co?subject=Dataset%20too%20big%20import%20error'>support@tileo.co</a>.",
+      what_about: "The dataset you tried to import is too big and cannot be processed. If the dataset allows it, you can try splitting it into smaller files and then append them once imported, or contact our support team at <a href='mailto:support@agroviz.com?subject=Dataset%20too%20big%20import%20error'>support@agroviz.com</a>.",
       source: ERROR_SOURCE_USER
     },
     6667 => {
@@ -298,13 +298,13 @@ module CartoDB
     6668 => {
       title: 'Too many table rows',
       what_about: "You cannot import this dataset. The number of rows exceeds the maximum dataset quota permitted " \
-                  "for your account. Please contact <a href='mailto:sales@tileo.co?subject=Dataset%20too%20many" \
+                  "for your account. Please contact <a href='mailto:sales@agroviz.com?subject=Dataset%20too%20many" \
                   "%20table%20rows%20import%20error'>Sales</a> if you have questions about importing this dataset.",
       source: ERROR_SOURCE_USER
     },
     6669 => {
       title: 'Too many concurrent imports',
-      what_about: "You cannot import more data until one of your active imports finishes. If you need further import slots contact our support team at <a href='mailto:support@tileo.co?subject=Dataset%20too%20many%20concurrent%20imports%20error'>support@tileo.co</a>.",
+      what_about: "You cannot import more data until one of your active imports finishes. If you need further import slots contact our support team at <a href='mailto:support@agroviz.com?subject=Dataset%20too%20many%20concurrent%20imports%20error'>support@agroviz.com</a>.",
       source: ERROR_SOURCE_USER
     },
     6670 => {
@@ -315,7 +315,7 @@ module CartoDB
     99999 => {
       title: 'Unknown',
       what_about: "Sorry, something went wrong and we're not sure what. Try
-      uploading your file again, or <a href='mailto:support@tileo.co?subject=Unknown error'>contact us</a> and we'll try to help you quickly.",
+      uploading your file again, or <a href='mailto:support@agroviz.com?subject=Unknown error'>contact us</a> and we'll try to help you quickly.",
       source: ERROR_SOURCE_TileoDB
     }
   }

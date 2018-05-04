@@ -182,7 +182,7 @@ class Admin::OrganizationsController < Admin::AdminController
     warning << "Your organization has run out of seats" unless @organization.valid_builder_seats?
     unless warning.empty?
       flash.now[:warning] = "#{warning.join('. ')}."
-      flash.now[:warning_detail] = "Users won't be able to sign up to your organization. <a href='mailto:support@tileo.co'>Contact us</a> to increase your quota."
+      flash.now[:warning_detail] = "Users won't be able to sign up to your organization. <a href='mailto:support@agroviz.com'>Contact us</a> to increase your quota."
     end
   end
 

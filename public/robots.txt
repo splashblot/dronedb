@@ -1,4 +1,4 @@
-# Contact us at support@tileo.co if you are having problems
+# Contact us at support@agroviz.com if you are having problems
 # while trying to access our API or whatever
 
 User-agent: Googlebot

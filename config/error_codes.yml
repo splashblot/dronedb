@@ -2,7 +2,7 @@ cartodb_errors:
   unknown_error:
     code: 0
     message: "We're sorry, an error has occurred"
-    hint: "Please try again, or <a href='mailto:support@tileo.co'>contact our support team</a> who will be happy to assist."
+    hint: "Please try again, or <a href='mailto:support@agroviz.com'>contact our support team</a> who will be happy to assist."
   empty_file:
     code: 1
     message: The file you have tried to upload has no data
@@ -22,7 +22,7 @@ cartodb_errors:
   table_copy_error:
     code: 5
     message: Error while duplicating table
-    hint: "Please try again, or <a href='mailto:support@tileo.co'>contact our support team</a> who will be happy to assist."
+    hint: "Please try again, or <a href='mailto:support@agroviz.com'>contact our support team</a> who will be happy to assist."
   quota_error:
     code: 6
     message: Disk Quota Exceeded!

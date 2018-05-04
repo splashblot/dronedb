@@ -3,7 +3,7 @@
     <div class="Header-navigation">
       <ul class="Header-navigationList">
         <li class="js-logo">
-          <a href="<%= cartodb_com_hosted? ? CartoDB.url(self, 'root') : "https://tileo.co" %>">
+          <a href="<%= cartodb_com_hosted? ? CartoDB.url(self, 'root') : "https://agroviz.com" %>">
             <span class="Logo">
               <img src="<%= image_path "tileo/logo/tileo-white_logo_combination.svg" %>" alt="tileo">
             </span>
@@ -42,7 +42,7 @@
 
         <% unless cartodb_com_hosted? %>
           <li class="Header-settingsItem">
-            <a href="mailto:info@tileo.co?Subject=Early%20access" class="PublicButton PublicButton--sMedium PublicButton--cWhite is-hover PublicButton--public">
+            <a href="mailto:info@agroviz.com?Subject=Early%20access" class="PublicButton PublicButton--sMedium PublicButton--cWhite is-hover PublicButton--public">
               <span>Sign up</span>
             </a>
           </li>

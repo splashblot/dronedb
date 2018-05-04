@@ -5,7 +5,7 @@ class OrganizationMailer < ActionMailer::Base
   def quota_limit_reached(organization)
     @organization = organization
     @subject = "Tu organización #{@organization.name} ha alcanzado el límite de cuota"
-    @link = "mailto:support@tileo.co"
+    @link = "mailto:support@agroviz.com"
 
     mail to: @organization.owner.email,
          subject: @subject
@@ -26,7 +26,7 @@ class OrganizationMailer < ActionMailer::Base
   def seat_limit_reached(organization)
     @organization = organization
     @subject = "Tu organización #{@organization.name} ha alcanzado el límite de usuarios"
-    @link = "mailto:support@tileo.co"
+    @link = "mailto:support@agroviz.com"
 
     mail to: @organization.owner.email,
          subject: @subject

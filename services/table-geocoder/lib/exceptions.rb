@@ -84,7 +84,7 @@ module Carto
         'Google geocoder timed out',
         %q{Your geocoding request timed out after several attempts.
            Please check your quota usage in the <a href='https://console.developers.google.com/'>Google Developers Console</a>
-           and <a href='mailto:support@tileo.co?subject=Google geocoder timed out'>contact us</a>
+           and <a href='mailto:support@agroviz.com?subject=Google geocoder timed out'>contact us</a>
            if you are within the usage limits.}.squish,
         AdditionalInfo::SOURCE_USER
         )

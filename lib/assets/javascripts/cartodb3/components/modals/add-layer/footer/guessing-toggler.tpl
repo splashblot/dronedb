@@ -7,6 +7,6 @@
 <% } else if (!customHosted) { %>
   <span class="CDB-Text CDB-Size-medium">
     <%- _t('components.modals.add-layer.footer.twitter-desc') %>
-    <a href="mailto:support@tileo.co"><%- _t('components.modals.add-layer.footer.contact-team') %></a>
+    <a href="mailto:support@agroviz.com"><%- _t('components.modals.add-layer.footer.contact-team') %></a>
   </span>
 <% } %>

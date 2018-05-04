@@ -8,7 +8,7 @@
       brand: 'ArcGIS<sup>&trade;</sup>'
     }) %>
   </p>
-  <a href="mailto:sales@tileo.co?subject=<%- _t('components.modals.add-layer.imports.demo-email-title', { name: 'ArcGIS' }) %>&body=<%- _t('components.modals.add-layer.imports.demo-email-desc', { name: 'ArcGIS' }) %>" class="CDB-Button CDB-Button--primary CDB-Button--medium">
+  <a href="mailto:sales@agroviz.com?subject=<%- _t('components.modals.add-layer.imports.demo-email-title', { name: 'ArcGIS' }) %>&body=<%- _t('components.modals.add-layer.imports.demo-email-desc', { name: 'ArcGIS' }) %>" class="CDB-Button CDB-Button--primary CDB-Button--medium">
     <span class="CDB-Button-Text CDB-Text is-semibold CDB-Size-medium u-upperCase"><%- _t('components.modals.add-layer.imports.ask-for-demo') %></span>
   </a>
 </div>
